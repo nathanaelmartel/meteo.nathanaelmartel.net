@@ -1,0 +1,68 @@
+<div class="navbar navbar-default">
+    <div class="navbar-header">
+        <a class="navbar-brand" href="index.html"><img src="/assets/images/logo.png" alt=""></a>
+
+        <ul class="nav navbar-nav pull-right visible-xs-block">
+            <li>
+                <a data-toggle="collapse" data-target="#navbar-mobile">
+                    <i class="far fa-bars"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="navbar-collapse collapse" id="navbar-mobile">
+        {% if is_granted("ROLE_ROOT") %}
+            <ul class="nav navbar-nav">
+                <li>
+                    <a class="sidebar-control sidebar-main-toggle hidden-xs">
+                        <i class="far fa-bars"></i>
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+
+        <ul class="nav navbar-nav navbar-right">
+
+            {% if app.user %}
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                        <i class="far fa-user"></i>
+                        {{ app.user }}
+                        <span class="visible-xs-inline-block position-right">
+                            Contact admin</span>
+                        <i class="far fa-chevron-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-right">
+                        <li>
+                            <a href="{{ path('profile_edit') }}">
+                                <i class="far fa-user"></i>
+                                Mon profil
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ path('profile_edit_password') }}">
+                                <i class="far fa-key"></i>
+                                Mon mot de passe
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_logout') }}">
+                                <i class="far fa-sign-out"></i>
+                                Déconnexion
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            {% else %}
+                <li>
+                    <a href="{#{ path('app_login') }#}">
+                        <i class="far fa-sign-in"></i>
+                        Login
+                    </a>
+                </li>
+            {% endif %}
+
+        </ul>
+    </div>
+</div>

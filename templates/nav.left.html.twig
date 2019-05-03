@@ -1,0 +1,87 @@
+{% if app.user %}
+    <div class="sidebar sidebar-main sidebar-default">
+        <div class="sidebar-content">
+
+            {#
+            <div class="sidebar-user">
+                <div class="category-content">
+                    <div class="media">
+                        <a href="#" class="media-left"><img src="/assets/images/placeholder.jpg" class="img-circle img-sm" alt=""></a>
+                        <div class="media-body">
+                            <span class="media-heading text-semibold">Victoria Baker</span>
+                            <div class="text-size-mini text-muted">
+                                <i class="far fa-map-marker-alt"></i>
+                                &nbsp;Santa Ana, CA
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+#}
+            <div class="sidebar-category sidebar-category-visible">
+                <div class="category-content no-padding">
+                    <ul class="navigation navigation-main navigation-accordion">
+
+                        <li {% if 'default' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                            <a href="{{ path('default') }}">
+                                <i class="far fa-home"></i>
+                                <span>Tableau de bord</span></a>
+                        </li>
+                        {% if is_granted("ROLE_ROOT") %}
+                            <li {% if 'admin' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                <a href="#" class="has-ul">
+                                    <i class="far fa-tools"></i>
+                                    <span>Administration</span>
+                                </a>
+                                <ul {% if not 'admin' in app.request.attributes.get('_route') %} class="hidden-ul" {% endif %}>
+                                    <li {% if 'admin_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('admin_user_index') }}">
+                                            <i class="far fa-users"></i>
+                                            Utilisateurs
+                                        </a>
+                                    </li>
+                                    <li {% if 'admin_formulaire' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('admin_formulaire_index') }}">
+                                            <i class="far fa-file-alt"></i>
+                                            Formulaires
+                                        </a>
+                                    </li>
+                                    <li {% if 'admin_category' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('admin_category_index') }}">
+                                            <i class="far fa-tags "></i>
+                                            Catégories d'emplois
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                        {% if is_granted("ROLE_ROOT") %}
+                            <li {% if 'setting' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                <a href="#" class="has-ul">
+                                    <i class="far fa-cogs"></i>
+                                    <span>Paramètres</span>
+                                </a>
+                                <ul {% if not 'setting' in app.request.attributes.get('_route') %} class="hidden-ul" {% endif %}>
+                                    <li {% if 'setting_mail_layout' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('setting_mail_layout') }}">Emails</a>
+                                    </li>
+                                    <li {% if 'setting_mail_new_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('setting_mail_new_user') }}">Email nouvel utilisateur</a>
+                                    </li>
+                                    <li {% if 'setting_password_forgotten_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('setting_password_forgotten_user') }}">Email mot de passe oublié</a>
+                                    </li>
+                                    <li {% if 'setting_mail_reset_password' in app.request.attributes.get('_route') %} class="active" {% endif %}>
+                                        <a href="{{ path('setting_mail_reset_password') }}">Email ré-initialisation mot de passe</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endif %}

@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}API{% endblock %}
+
+{% block body %}
+    <a href="{{ path('api') }}">API</a>
+    <a href="{{ path('api_temperature', {'value': 12.123}) }}">API Temperature</a>
+{% endblock %}

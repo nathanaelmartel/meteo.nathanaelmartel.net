@@ -2,11 +2,84 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}{% endblock %}
+        <title>
+            {% block title %}{% endblock %}
+            Preventia
+        </title>
+        {% block stylesheets %}
+            <link href="/assets/css/bootstrap.css" rel="stylesheet" type="text/css"/>
+            <link href="/assets/css/core.css" rel="stylesheet" type="text/css"/>
+            <link href="/assets/css/components.css" rel="stylesheet" type="text/css"/>
+            <link href="/assets/fonts/fontawesome/css/all.min.css" rel="stylesheet" type="text/css"/>
+            <link href="/assets/js/plugins/uploaders/dropzone/dropzone.min.css" rel="stylesheet" type="text/css"/>
+            <link href="/assets/css/preventia.css" rel="stylesheet" type="text/css"/>
+        {% endblock %}
+
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+        <link rel="icon" type="image/png" href="/favicon.png"/>
     </head>
-    <body>
-        {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
+    <body class="{% block bodyclass %}{% endblock %} {% if not is_granted('ROLE_ROOT') %}layout-boxed{% endif %}">
+        {% include('nav.top.html.twig') %}
+        <div class="page-container">
+            <div class="page-content">
+                {% if is_granted("ROLE_ROOT") %}
+                    {% include('nav.left.html.twig') %}
+                {% endif %}
+                <div class="content-wrapper">
+
+                    <div class="page-header page-header-default page-header-xs">
+                        {#
+                        <div class="page-header-content">
+                            <div class="page-title">
+                                <h4>
+                                    {% block heading %}{% endblock %}
+                                </h4>
+                            </div>
+
+                            <div class="heading-elements">
+                                <div class="btn-group">
+                                    {% block headingbutton %}{% endblock %}
+                                </div>
+                            </div>
+                        </div>
+                        #}
+
+                        <div class="breadcrumb-line">
+                            <a class="breadcrumb-elements-toggle">
+                                <i class="far fa-bars"></i>
+                            </a>
+                            <ul class="breadcrumb">
+                                {% block breadcrumbitems %}{% endblock %}
+                            </ul>
+                            <ul class="breadcrumb-elements">
+                                {% block breadcrumbbutton %}{% endblock %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        {% include('flash.html.twig') %}
+                        {% block body %}{% endblock %}
+                    </div>
+                </div>
+
+                {% block footer %}
+                    <div class="text-muted text-center">
+                        &copy; 2019 Preventia par
+                        <a href="https://www.prevention-risque-routier.fr/" target="_blank">www.prevention-risque-routier.fr</a>
+                    </div>
+                {% endblock %}
+            </div>
+        </div>
+        {% block javascripts %}
+            <script type="text/javascript" src="/assets/js/plugins/loaders/pace.min.js"></script>
+            <script type="text/javascript" src="/assets/js/core/libraries/jquery.min.js"></script>
+            <script type="text/javascript" src="/assets/js/core/libraries/bootstrap.min.js"></script>
+            <script type="text/javascript" src="/assets/js/plugins/loaders/blockui.min.js"></script>
+            <script type="text/javascript" src="/assets/js/core/app.js"></script>
+            <script type="text/javascript" src="/assets/js/plugins/uploaders/dropzone/dropzone.min.js"></script>
+            <script type="text/javascript" src="/assets/js/preventia.js"></script>
+        {% endblock %}
     </body>
 </html>
