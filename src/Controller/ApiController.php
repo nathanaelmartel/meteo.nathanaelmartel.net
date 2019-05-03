@@ -39,6 +39,16 @@ class ApiController extends Controller
         return new Response('ok', 200);
     }
 
+    /**
+     * @Route("/api/humidity/{value}", name="api_humidity")
+     */
+    public function humidity($value)
+    {
+        $measure = $this->addMeasure('humidity', $value);
+
+        return new Response('ok', 200);
+    }
+
     public function addMeasure($type, $value)
     {
         $em = $this->getDoctrine()->getManager();
