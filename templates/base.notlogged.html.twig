@@ -6,33 +6,28 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>
             {% block title %}{% endblock %}
-            — Preventia</title>
+            — simplement Web</title>
         {% block stylesheets %}
             <link href="/assets/css/bootstrap.css" rel="stylesheet" type="text/css">
             <link href="/assets/css/core.css" rel="stylesheet" type="text/css">
             <link href="/assets/css/components.css" rel="stylesheet" type="text/css">
             <link href="/assets/fonts/fontawesome/css/all.min.css" rel="stylesheet" type="text/css">
-            <link href="/assets/css/preventia.css" rel="stylesheet" type="text/css">
+            <link href="/assets/css/manager.css" rel="stylesheet" type="text/css">
         {% endblock %}
-
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-        <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
-        <link rel="icon" type="image/png" href="/favicon.png"/>
     </head>
     <body class="{% block bodyclass %}{% endblock %}">
 
-        <div class="navbar navbar-default">
+        <div class="navbar navbar-inverse">
             {#
             <div class="navbar-header">
                 <a class="navbar-brand" href="/"><img src="assets/images/logo.png" alt=""></a>
-            </div>
-            #}
+            </div>#}
 
             <div class="navbar-collapse collapse" id="navbar-mobile">
                 <ul class="nav navbar-nav navbar-right">
                     <li>
-                        <a href="https://www.prevention-risque-routier.fr/" target="_blank">
-                            <i class="far fa-globe"></i>
+                        <a href="https://lab.simplement-web.com" target="_blank">
+                            <i class="fal fa-globe"></i>
                             <span class="visible-xs-inline-block position-right">
                                 Site web</span>
                         </a>
@@ -48,8 +43,7 @@
                         {% block body %}{% endblock %}
                         {% block footer %}
                             <div class="footer text-muted text-center">
-                                &copy; 2019 Preventia par
-                                <a href="https://www.prevention-risque-routier.fr/" target="_blank">www.prevention-risque-routier.fr</a>
+                                <a href="https://www.simplement-web.com" target="_blank">www.simplement-web.com</a>
                             </div>
                         {% endblock %}
                     </div>
