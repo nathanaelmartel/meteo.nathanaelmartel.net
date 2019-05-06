@@ -23,7 +23,7 @@
                     <ul class="navigation navigation-main navigation-accordion">
 
                         <li {% if 'admin_site' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                            <a href="{{ path('admin_site_index') }}">
+                            <a href="{#{ path('admin_site_index') }#}">
                                 <i class="fal fa-globe"></i>
                                 <span>Sites</span></a>
                         </li>

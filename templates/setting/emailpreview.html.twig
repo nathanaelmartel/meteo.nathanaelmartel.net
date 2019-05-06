@@ -1,0 +1,32 @@
+{% for email_preview in email_previews %}
+    <div class="row">
+        <div class="col-md-9 col-sm-9 col-xs-12">
+            <div class="panel panel-flat">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Aperçus
+                        {{ settings[email_preview]['label'] }}</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="panel-body">
+                    <iframe class="preview" style="border:1px solid #ddd;width:100%;height:50vh;overflow:scroll;" src="{{ absolute_url(path('setting_mail_preview', {'key': email_preview})) }}">
+                        <a href="{{ absolute_url(path('setting_mail_preview', {'key': email_preview})) }}" target="_blank">{{ absolute_url(path('setting_mail_preview', {'key': email_preview})) }}</a>
+                    </iframe>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-3 col-xs-12">
+            <div class="panel panel-flat">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Aperçus
+                    </h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="panel-body">
+                    <iframe class="preview" style="border:1px solid #ddd;width:100%;height:50vh;overflow:scroll;" src="{{ absolute_url(path('setting_mail_preview', {'key': email_preview})) }}">
+                        <a href="{{ absolute_url(path('setting_mail_preview', {'key': email_preview})) }}" target="_blank">{{ absolute_url(path('setting_mail_preview', {'key': email_preview})) }}</a>
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
