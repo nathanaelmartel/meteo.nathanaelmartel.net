@@ -129,7 +129,7 @@ class MeasureRepository extends ServiceEntityRepository
             }
             if (13 == $nbcar_date) {
                 $date = new \DateTime($day['day'].':00');
-                $stats[$day['day']]['display_day'] = $date->format('d/m/Y');
+                $stats[$day['day']]['display_day'] = $date->format('H:i');
             }
             if (10 == $nbcar_date) {
                 $date = new \DateTime($day['day']);
