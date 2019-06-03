@@ -10,16 +10,6 @@ use App\Entity\Measure;
 class ApiController extends Controller
 {
     /**
-     * @Route("/", name="default")
-     */
-    public function default()
-    {
-        return $this->render('api/index.html.twig', [
-            'controller_name' => 'ApiController',
-        ]);
-    }
-
-    /**
      * @Route("/api", name="api")
      */
     public function index()
