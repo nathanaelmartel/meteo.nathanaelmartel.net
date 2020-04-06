@@ -3,10 +3,10 @@
 namespace Doctrine\Bundle\DoctrineBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\DependencyInjection\Compiler\ServiceRepositoryCompilerPass;
-use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Repository\RepositoryFactory;
+use Doctrine\Persistence\ObjectRepository;
 use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
@@ -39,7 +39,7 @@ final class ContainerRepositoryFactory implements RepositoryFactory
     /**
      * {@inheritdoc}
      */
-    public function getRepository(EntityManagerInterface $entityManager, $entityName)
+    public function getRepository(EntityManagerInterface $entityManager, $entityName) : ObjectRepository
     {
         $metadata            = $entityManager->getClassMetadata($entityName);
         $repositoryServiceId = $metadata->customRepositoryClassName;
@@ -72,8 +72,10 @@ final class ContainerRepositoryFactory implements RepositoryFactory
         return $this->getOrCreateRepository($entityManager, $metadata);
     }
 
-    private function getOrCreateRepository(EntityManagerInterface $entityManager, ClassMetadata $metadata)
-    {
+    private function getOrCreateRepository(
+        EntityManagerInterface $entityManager,
+        ClassMetadata $metadata
+    ) : ObjectRepository {
         $repositoryHash = $metadata->getName() . spl_object_hash($entityManager);
         if (isset($this->managedRepositories[$repositoryHash])) {
             return $this->managedRepositories[$repositoryHash];

@@ -82,6 +82,8 @@ trait AbstractTrait
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function hasItem($key)
     {
@@ -94,7 +96,7 @@ trait AbstractTrait
         try {
             return $this->doHave($id);
         } catch (\Exception $e) {
-            CacheItem::log($this->logger, 'Failed to check if key "{key}" is cached', ['key' => $key, 'exception' => $e]);
+            CacheItem::log($this->logger, 'Failed to check if key "{key}" is cached: '.$e->getMessage(), ['key' => $key, 'exception' => $e]);
 
             return false;
         }
@@ -102,11 +104,21 @@ trait AbstractTrait
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $prefix
+     *
+     * @return bool
      */
-    public function clear()
+    public function clear(/*string $prefix = ''*/)
     {
         $this->deferred = [];
         if ($cleared = $this->versioningIsEnabled) {
+            if ('' === $namespaceVersionToClear = $this->namespaceVersion) {
+                foreach ($this->doFetch([static::NS_SEPARATOR.$this->namespace]) as $v) {
+                    $namespaceVersionToClear = $v;
+                }
+            }
+            $namespaceToClear = $this->namespace.$namespaceVersionToClear;
             $namespaceVersion = substr_replace(base64_encode(pack('V', mt_rand())), static::NS_SEPARATOR, 5);
             try {
                 $cleared = $this->doSave([static::NS_SEPARATOR.$this->namespace => $namespaceVersion], 0);
@@ -117,12 +129,15 @@ trait AbstractTrait
                 $this->namespaceVersion = $namespaceVersion;
                 $this->ids = [];
             }
+        } else {
+            $prefix = 0 < \func_num_args() ? (string) func_get_arg(0) : '';
+            $namespaceToClear = $this->namespace.$prefix;
         }
 
         try {
-            return $this->doClear($this->namespace) || $cleared;
+            return $this->doClear($namespaceToClear) || $cleared;
         } catch (\Exception $e) {
-            CacheItem::log($this->logger, 'Failed to clear the cache', ['exception' => $e]);
+            CacheItem::log($this->logger, 'Failed to clear the cache: '.$e->getMessage(), ['exception' => $e]);
 
             return false;
         }
@@ -130,6 +145,8 @@ trait AbstractTrait
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function deleteItem($key)
     {
@@ -138,6 +155,8 @@ trait AbstractTrait
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function deleteItems(array $keys)
     {
@@ -166,7 +185,8 @@ trait AbstractTrait
                 }
             } catch (\Exception $e) {
             }
-            CacheItem::log($this->logger, 'Failed to delete key "{key}"', ['key' => $key, 'exception' => $e]);
+            $message = 'Failed to delete key "{key}"'.($e instanceof \Exception ? ': '.$e->getMessage() : '.');
+            CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e]);
             $ok = false;
         }
 
@@ -230,7 +250,7 @@ trait AbstractTrait
             if (false !== $value = unserialize($value)) {
                 return $value;
             }
-            throw new \DomainException('Failed to unserialize cached value');
+            throw new \DomainException('Failed to unserialize cached value.');
         } catch (\Error $e) {
             throw new \ErrorException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine());
         } finally {
@@ -238,7 +258,7 @@ trait AbstractTrait
         }
     }
 
-    private function getId($key)
+    private function getId($key): string
     {
         if ($this->versioningIsEnabled && '' === $this->namespaceVersion) {
             $this->ids = [];

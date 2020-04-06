@@ -11,6 +11,8 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Templating;
 
+@trigger_error('The '.TemplateNameParser::class.' class is deprecated since version 4.3 and will be removed in 5.0; use Twig instead.', E_USER_DEPRECATED);
+
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Templating\TemplateNameParser as BaseTemplateNameParser;
 use Symfony\Component\Templating\TemplateReferenceInterface;
@@ -21,6 +23,8 @@ use Symfony\Component\Templating\TemplateReferenceInterface;
  * instances.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @deprecated since version 4.3, to be removed in 5.0; use Twig instead.
  */
 class TemplateNameParser extends BaseTemplateNameParser
 {
@@ -44,7 +48,7 @@ class TemplateNameParser extends BaseTemplateNameParser
         }
 
         // normalize name
-        $name = str_replace(':/', ':', preg_replace('#/{2,}#', '/', str_replace('\\', '/', $name)));
+        $name = preg_replace('#/{2,}#', '/', str_replace('\\', '/', $name));
 
         if (false !== strpos($name, '..')) {
             throw new \RuntimeException(sprintf('Template name "%s" contains invalid characters.', $name));

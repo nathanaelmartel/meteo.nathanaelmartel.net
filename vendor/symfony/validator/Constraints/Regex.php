@@ -12,6 +12,7 @@
 namespace Symfony\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Exception\InvalidArgumentException;
 
 /**
  * @Annotation
@@ -31,6 +32,16 @@ class Regex extends Constraint
     public $pattern;
     public $htmlPattern;
     public $match = true;
+    public $normalizer;
+
+    public function __construct($options = null)
+    {
+        parent::__construct($options);
+
+        if (null !== $this->normalizer && !\is_callable($this->normalizer)) {
+            throw new InvalidArgumentException(sprintf('The "normalizer" option must be a valid callable ("%s" given).', \is_object($this->normalizer) ? \get_class($this->normalizer) : \gettype($this->normalizer)));
+        }
+    }
 
     /**
      * {@inheritdoc}
@@ -71,7 +82,7 @@ class Regex extends Constraint
 
         // Quit if delimiters not at very beginning/end (e.g. when options are passed)
         if ($this->pattern[0] !== $this->pattern[\strlen($this->pattern) - 1]) {
-            return;
+            return null;
         }
 
         $delimiter = $this->pattern[0];

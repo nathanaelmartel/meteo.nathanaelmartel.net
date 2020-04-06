@@ -26,18 +26,22 @@ use Symfony\Component\Process\Process;
  * Runs Symfony application using a local web server.
  *
  * @author Michał Pipa <michal.pipa.xsolve@gmail.com>
+ *
+ * @deprecated since Symfony 4.4, to be removed in 5.0; the new Symfony local server has more features, you can use it instead.
  */
 class ServerRunCommand extends Command
 {
     private $documentRoot;
     private $environment;
+    private $pidFileDirectory;
 
     protected static $defaultName = 'server:run';
 
-    public function __construct(string $documentRoot = null, string $environment = null)
+    public function __construct(string $documentRoot = null, string $environment = null, string $pidFileDirectory = null)
     {
         $this->documentRoot = $documentRoot;
         $this->environment = $environment;
+        $this->pidFileDirectory = $pidFileDirectory;
 
         parent::__construct();
     }
@@ -77,7 +81,7 @@ Specify your own router script via the <info>--router</info> option:
 
   <info>%command.full_name% --router=app/config/router.php</info>
 
-See also: http://www.php.net/manual/en/features.commandline.webserver.php
+See also: https://php.net/features.commandline.webserver
 EOF
             )
         ;
@@ -88,6 +92,8 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        @trigger_error('Using the WebserverBundle is deprecated since Symfony 4.4. The new Symfony local server has more features, you can use it instead.', E_USER_DEPRECATED);
+
         $io = new SymfonyStyle($input, $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output);
 
         if (null === $documentRoot = $input->getOption('docroot')) {
@@ -129,7 +135,7 @@ EOF
         }
 
         try {
-            $server = new WebServer();
+            $server = new WebServer($this->pidFileDirectory);
             $config = new WebServerConfig($documentRoot, $env, $input->getArgument('addressport'), $input->getOption('router'));
 
             $message = sprintf('Server listening on http://%s', $config->getAddress());

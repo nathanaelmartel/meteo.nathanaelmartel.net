@@ -28,7 +28,7 @@ trait MemcachedTrait
         'persistent_id' => null,
         'username' => null,
         'password' => null,
-        'serializer' => 'php',
+        \Memcached::OPT_SERIALIZER => \Memcached::SERIALIZER_PHP,
     ];
 
     private $marshaller;
@@ -40,10 +40,10 @@ trait MemcachedTrait
         return \extension_loaded('memcached') && version_compare(phpversion('memcached'), '2.2.0', '>=');
     }
 
-    private function init(\Memcached $client, $namespace, $defaultLifetime, ?MarshallerInterface $marshaller)
+    private function init(\Memcached $client, string $namespace, int $defaultLifetime, ?MarshallerInterface $marshaller)
     {
         if (!static::isSupported()) {
-            throw new CacheException('Memcached >= 2.2.0 is required');
+            throw new CacheException('Memcached >= 2.2.0 is required.');
         }
         if ('Memcached' === \get_class($client)) {
             $opt = $client->getOption(\Memcached::OPT_SERIALIZER);
@@ -71,7 +71,6 @@ trait MemcachedTrait
      * - [['localhost', 11211, 33]]
      *
      * @param array[]|string|string[] $servers An array of servers, a DSN, or an array of DSNs
-     * @param array                   $options An array of options
      *
      * @return \Memcached
      *
@@ -82,10 +81,10 @@ trait MemcachedTrait
         if (\is_string($servers)) {
             $servers = [$servers];
         } elseif (!\is_array($servers)) {
-            throw new InvalidArgumentException(sprintf('MemcachedAdapter::createClient() expects array or string as first argument, %s given.', \gettype($servers)));
+            throw new InvalidArgumentException(sprintf('MemcachedAdapter::createClient() expects array or string as first argument, "%s" given.', \gettype($servers)));
         }
         if (!static::isSupported()) {
-            throw new CacheException('Memcached >= 2.2.0 is required');
+            throw new CacheException('Memcached >= 2.2.0 is required.');
         }
         set_error_handler(function ($type, $msg, $file, $line) { throw new \ErrorException($msg, 0, $type, $file, $line); });
         try {
@@ -100,7 +99,7 @@ trait MemcachedTrait
                     continue;
                 }
                 if (0 !== strpos($dsn, 'memcached:')) {
-                    throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: %s does not start with "memcached:"', $dsn));
+                    throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: "%s" does not start with "memcached:".', $dsn));
                 }
                 $params = preg_replace_callback('#^memcached:(//)?(?:([^@]*+)@)?#', function ($m) use (&$username, &$password) {
                     if (!empty($m[2])) {
@@ -110,7 +109,7 @@ trait MemcachedTrait
                     return 'file:'.($m[1] ?? '');
                 }, $dsn);
                 if (false === $params = parse_url($params)) {
-                    throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: %s', $dsn));
+                    throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: "%s".', $dsn));
                 }
                 $query = $hosts = [];
                 if (isset($params['query'])) {
@@ -118,7 +117,7 @@ trait MemcachedTrait
 
                     if (isset($query['host'])) {
                         if (!\is_array($hosts = $query['host'])) {
-                            throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: %s', $dsn));
+                            throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: "%s".', $dsn));
                         }
                         foreach ($hosts as $host => $weight) {
                             if (false === $port = strrpos($host, ':')) {
@@ -137,7 +136,7 @@ trait MemcachedTrait
                     }
                 }
                 if (!isset($params['host']) && !isset($params['path'])) {
-                    throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: %s', $dsn));
+                    throw new InvalidArgumentException(sprintf('Invalid Memcached DSN: "%s".', $dsn));
                 }
                 if (isset($params['path']) && preg_match('#/(\d+)$#', $params['path'], $m)) {
                     $params['weight'] = $m[1];
@@ -281,6 +280,7 @@ trait MemcachedTrait
         foreach ($this->checkResultCode($this->getClient()->deleteMulti($encodedIds)) as $result) {
             if (\Memcached::RES_SUCCESS !== $result && \Memcached::RES_NOTFOUND !== $result) {
                 $ok = false;
+                break;
             }
         }
 
@@ -306,10 +306,7 @@ trait MemcachedTrait
         throw new CacheException(sprintf('MemcachedAdapter client error: %s.', strtolower($this->client->getResultMessage())));
     }
 
-    /**
-     * @return \Memcached
-     */
-    private function getClient()
+    private function getClient(): \Memcached
     {
         if ($this->client) {
             return $this->client;

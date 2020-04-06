@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Console\Descriptor;
 
+use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -27,9 +28,6 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class MarkdownDescriptor extends Descriptor
 {
-    /**
-     * {@inheritdoc}
-     */
     protected function describeRouteCollection(RouteCollection $routes, array $options = [])
     {
         $first = true;
@@ -44,9 +42,6 @@ class MarkdownDescriptor extends Descriptor
         $this->write("\n");
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeRoute(Route $route, array $options = [])
     {
         $output = '- Path: '.$route->getPath()
@@ -60,15 +55,16 @@ class MarkdownDescriptor extends Descriptor
             ."\n".'- Requirements: '.($route->getRequirements() ? $this->formatRouterConfig($route->getRequirements()) : 'NO CUSTOM')
             ."\n".'- Options: '.$this->formatRouterConfig($route->getOptions());
 
+        if ('' !== $route->getCondition()) {
+            $output .= "\n".'- Condition: '.$route->getCondition();
+        }
+
         $this->write(isset($options['name'])
             ? $options['name']."\n".str_repeat('-', \strlen($options['name']))."\n\n".$output
             : $output);
         $this->write("\n");
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerParameters(ParameterBag $parameters, array $options = [])
     {
         $this->write("Container parameters\n====================\n");
@@ -77,9 +73,6 @@ class MarkdownDescriptor extends Descriptor
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerTags(ContainerBuilder $builder, array $options = [])
     {
         $showHidden = isset($options['show_hidden']) && $options['show_hidden'];
@@ -94,9 +87,6 @@ class MarkdownDescriptor extends Descriptor
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerService($service, array $options = [], ContainerBuilder $builder = null)
     {
         if (!isset($options['id'])) {
@@ -114,9 +104,6 @@ class MarkdownDescriptor extends Descriptor
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerServices(ContainerBuilder $builder, array $options = [])
     {
         $showHidden = isset($options['show_hidden']) && $options['show_hidden'];
@@ -127,7 +114,9 @@ class MarkdownDescriptor extends Descriptor
         }
         $this->write($title."\n".str_repeat('=', \strlen($title)));
 
-        $serviceIds = isset($options['tag']) && $options['tag'] ? array_keys($builder->findTaggedServiceIds($options['tag'])) : $builder->getServiceIds();
+        $serviceIds = isset($options['tag']) && $options['tag']
+            ? $this->sortTaggedServicesByPriority($builder->findTaggedServiceIds($options['tag']))
+            : $this->sortServiceIds($builder->getServiceIds());
         $showArguments = isset($options['show_arguments']) && $options['show_arguments'];
         $services = ['definitions' => [], 'aliases' => [], 'services' => []];
 
@@ -135,7 +124,7 @@ class MarkdownDescriptor extends Descriptor
             $serviceIds = array_filter($serviceIds, $options['filter']);
         }
 
-        foreach ($this->sortServiceIds($serviceIds) as $serviceId) {
+        foreach ($serviceIds as $serviceId) {
             $service = $this->resolveServiceDefinition($builder, $serviceId);
 
             if ($showHidden xor '.' === ($serviceId[0] ?? null)) {
@@ -176,9 +165,6 @@ class MarkdownDescriptor extends Descriptor
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerDefinition(Definition $definition, array $options = [])
     {
         $output = '';
@@ -226,7 +212,7 @@ class MarkdownDescriptor extends Descriptor
         }
 
         if (!(isset($options['omit_tags']) && $options['omit_tags'])) {
-            foreach ($definition->getTags() as $tagName => $tagData) {
+            foreach ($this->sortTagsByPriority($definition->getTags()) as $tagName => $tagData) {
                 foreach ($tagData as $parameters) {
                     $output .= "\n".'- Tag: `'.$tagName.'`';
                     foreach ($parameters as $name => $value) {
@@ -239,16 +225,15 @@ class MarkdownDescriptor extends Descriptor
         $this->write(isset($options['id']) ? sprintf("### %s\n\n%s\n", $options['id'], $output) : $output);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerAlias(Alias $alias, array $options = [], ContainerBuilder $builder = null)
     {
         $output = '- Service: `'.$alias.'`'
             ."\n".'- Public: '.($alias->isPublic() && !$alias->isPrivate() ? 'yes' : 'no');
 
         if (!isset($options['id'])) {
-            return $this->write($output);
+            $this->write($output);
+
+            return;
         }
 
         $this->write(sprintf("### %s\n\n%s\n", $options['id'], $output));
@@ -261,17 +246,16 @@ class MarkdownDescriptor extends Descriptor
         $this->describeContainerDefinition($builder->getDefinition((string) $alias), array_merge($options, ['id' => (string) $alias]));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeContainerParameter($parameter, array $options = [])
     {
         $this->write(isset($options['parameter']) ? sprintf("%s\n%s\n\n%s", $options['parameter'], str_repeat('=', \strlen($options['parameter'])), $this->formatParameter($parameter)) : $parameter);
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    protected function describeContainerEnvVars(array $envs, array $options = [])
+    {
+        throw new LogicException('Using the markdown format to debug environment variables is not supported.');
+    }
+
     protected function describeEventDispatcherListeners(EventDispatcherInterface $eventDispatcher, array $options = [])
     {
         $event = \array_key_exists('event', $options) ? $options['event'] : null;
@@ -305,9 +289,6 @@ class MarkdownDescriptor extends Descriptor
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function describeCallable($callable, array $options = [])
     {
         $string = '';
@@ -379,10 +360,7 @@ class MarkdownDescriptor extends Descriptor
         throw new \InvalidArgumentException('Callable is not describable.');
     }
 
-    /**
-     * @return string
-     */
-    private function formatRouterConfig(array $array)
+    private function formatRouterConfig(array $array): string
     {
         if (!$array) {
             return 'NONE';

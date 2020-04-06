@@ -28,14 +28,13 @@ class CsrfExtension extends AbstractExtension
     private $translationDomain;
 
     /**
-     * @param CsrfTokenManagerInterface $tokenManager      The CSRF token manager
-     * @param TranslatorInterface|null  $translator        The translator for translating error messages
-     * @param string|null               $translationDomain The translation domain for translating
+     * @param TranslatorInterface|null $translator        The translator for translating error messages
+     * @param string|null              $translationDomain The translation domain for translating
      */
     public function __construct(CsrfTokenManagerInterface $tokenManager, $translator = null, string $translationDomain = null)
     {
         if (null !== $translator && !$translator instanceof LegacyTranslatorInterface && !$translator instanceof TranslatorInterface) {
-            throw new \TypeError(sprintf('Argument 2 passed to %s() must be an instance of %s, %s given.', __METHOD__, TranslatorInterface::class, \is_object($translator) ? \get_class($translator) : \gettype($translator)));
+            throw new \TypeError(sprintf('Argument 2 passed to "%s()" must be an instance of "%s", "%s" given.', __METHOD__, TranslatorInterface::class, \is_object($translator) ? \get_class($translator) : \gettype($translator)));
         }
         $this->tokenManager = $tokenManager;
         $this->translator = $translator;

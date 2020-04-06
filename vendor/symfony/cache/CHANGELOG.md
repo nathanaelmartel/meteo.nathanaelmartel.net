@@ -1,6 +1,25 @@
 CHANGELOG
 =========
 
+4.4.0
+-----
+
+ * added support for connecting to Redis Sentinel clusters
+ * added argument `$prefix` to `AdapterInterface::clear()`
+ * improved `RedisTagAwareAdapter` to support Redis server >= 2.8 and up to 4B items per tag
+ * added `TagAwareMarshaller` for optimized data storage when using `AbstractTagAwareAdapter`
+ * added `DeflateMarshaller` to compress serialized values
+ * removed support for phpredis 4 `compression`
+ * [BC BREAK] `RedisTagAwareAdapter` is not compatible with `RedisCluster` from `Predis` anymore, use `phpredis` instead
+ * Marked the `CacheDataCollector` class as `@final`.
+
+4.3.0
+-----
+
+ * removed `psr/simple-cache` dependency, run `composer require psr/simple-cache` if you need it
+ * deprecated all PSR-16 adapters, use `Psr16Cache` or `Symfony\Contracts\Cache\CacheInterface` implementations instead
+ * deprecated `SimpleCacheAdapter`, use `Psr16Adapter` instead
+
 4.2.0
 -----
 

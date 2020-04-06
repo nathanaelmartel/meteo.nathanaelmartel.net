@@ -31,7 +31,7 @@ class Exporter
      * @param int               &$objectsCount
      * @param bool              &$valuesAreStatic
      *
-     * @return int
+     * @return array
      *
      * @throws NotInstantiableTypeException When a value cannot be serialized
      */
@@ -78,7 +78,7 @@ class Exporter
 
             if ($reflector->hasMethod('__serialize')) {
                 if (!$reflector->getMethod('__serialize')->isPublic()) {
-                    throw new \Error(sprintf('Call to %s method %s::__serialize()', $reflector->getMethod('__serialize')->isProtected() ? 'protected' : 'private', $class));
+                    throw new \Error(sprintf('Call to %s method "%s::__serialize()".', $reflector->getMethod('__serialize')->isProtected() ? 'protected' : 'private', $class));
                 }
 
                 if (!\is_array($properties = $value->__serialize())) {
@@ -155,7 +155,7 @@ class Exporter
                     }
                     $sleep[$n] = false;
                 }
-                if (!\array_key_exists($name, $proto) || $proto[$name] !== $v) {
+                if (!\array_key_exists($name, $proto) || $proto[$name] !== $v || "\x00Error\x00trace" === $name || "\x00Exception\x00trace" === $name) {
                     $properties[$c][$n] = $v;
                 }
             }
@@ -222,14 +222,14 @@ class Exporter
                 ));
 
                 if ("'" === $m[2]) {
-                   return substr($m[1], 0, -2);
+                    return substr($m[1], 0, -2);
                 }
 
                 if ('n".\'' === substr($m[1], -4)) {
-                   return substr_replace($m[1], "\n".$subIndent.".'".$m[2], -2);
+                    return substr_replace($m[1], "\n".$subIndent.".'".$m[2], -2);
                 }
 
-               return $m[1].$m[2];
+                return $m[1].$m[2];
             }, $code, -1, $count);
 
             if ($count && 0 === strpos($code, "''.")) {
@@ -292,7 +292,7 @@ class Exporter
                 continue;
             }
             if (!Registry::$instantiableWithoutConstructor[$class]) {
-                if (is_subclass_of($class, 'Serializable')) {
+                if (is_subclass_of($class, 'Serializable') && !method_exists($class, '__unserialize')) {
                     $serializables[$k] = 'C:'.\strlen($class).':"'.$class.'":0:{}';
                 } else {
                     $serializables[$k] = 'O:'.\strlen($class).':"'.$class.'":0:{}';

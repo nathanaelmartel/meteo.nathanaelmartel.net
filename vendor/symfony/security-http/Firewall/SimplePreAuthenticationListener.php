@@ -13,9 +13,10 @@ namespace Symfony\Component\Security\Http\Firewall;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolverInterface;
@@ -40,8 +41,10 @@ use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategyInterfa
  *
  * @deprecated since Symfony 4.2, use Guard instead.
  */
-class SimplePreAuthenticationListener implements ListenerInterface
+class SimplePreAuthenticationListener extends AbstractListener implements ListenerInterface
 {
+    use LegacyListenerTrait;
+
     private $tokenStorage;
     private $authenticationManager;
     private $providerKey;
@@ -62,7 +65,13 @@ class SimplePreAuthenticationListener implements ListenerInterface
         $this->providerKey = $providerKey;
         $this->simpleAuthenticator = $simpleAuthenticator;
         $this->logger = $logger;
-        $this->dispatcher = $dispatcher;
+
+        if (null !== $dispatcher && class_exists(LegacyEventDispatcherProxy::class)) {
+            $this->dispatcher = LegacyEventDispatcherProxy::decorate($dispatcher);
+        } else {
+            $this->dispatcher = $dispatcher;
+        }
+
         $this->trustResolver = $trustResolver ?: new AuthenticationTrustResolver(AnonymousToken::class, RememberMeToken::class);
     }
 
@@ -76,10 +85,28 @@ class SimplePreAuthenticationListener implements ListenerInterface
         $this->sessionStrategy = $sessionStrategy;
     }
 
+    public function supports(Request $request): ?bool
+    {
+        if ((null !== $token = $this->tokenStorage->getToken()) && !$this->trustResolver->isAnonymous($token)) {
+            return false;
+        }
+
+        $token = $this->simpleAuthenticator->createToken($request, $this->providerKey);
+
+        // allow null to be returned to skip authentication
+        if (null === $token) {
+            return false;
+        }
+
+        $request->attributes->set('_simple_pre_authenticator_token', $token);
+
+        return true;
+    }
+
     /**
      * Handles basic authentication.
      */
-    public function handle(GetResponseEvent $event)
+    public function authenticate(RequestEvent $event)
     {
         $request = $event->getRequest();
 
@@ -88,16 +115,14 @@ class SimplePreAuthenticationListener implements ListenerInterface
         }
 
         if ((null !== $token = $this->tokenStorage->getToken()) && !$this->trustResolver->isAnonymous($token)) {
+            $request->attributes->remove('_simple_pre_authenticator_token');
+
             return;
         }
 
         try {
-            $token = $this->simpleAuthenticator->createToken($request, $this->providerKey);
-
-            // allow null to be returned to skip authentication
-            if (null === $token) {
-                return;
-            }
+            $token = $request->attributes->get('_simple_pre_authenticator_token');
+            $request->attributes->remove('_simple_pre_authenticator_token');
 
             $token = $this->authenticationManager->authenticate($token);
 
@@ -107,7 +132,7 @@ class SimplePreAuthenticationListener implements ListenerInterface
 
             if (null !== $this->dispatcher) {
                 $loginEvent = new InteractiveLoginEvent($request, $token);
-                $this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
+                $this->dispatcher->dispatch($loginEvent, SecurityEvents::INTERACTIVE_LOGIN);
             }
         } catch (AuthenticationException $e) {
             $this->tokenStorage->setToken(null);
@@ -121,7 +146,7 @@ class SimplePreAuthenticationListener implements ListenerInterface
                 if ($response instanceof Response) {
                     $event->setResponse($response);
                 } elseif (null !== $response) {
-                    throw new \UnexpectedValueException(sprintf('The %s::onAuthenticationFailure method must return null or a Response object', \get_class($this->simpleAuthenticator)));
+                    throw new \UnexpectedValueException(sprintf('The "%s::onAuthenticationFailure()" method must return null or a Response object.', \get_class($this->simpleAuthenticator)));
                 }
             }
 
@@ -133,7 +158,7 @@ class SimplePreAuthenticationListener implements ListenerInterface
             if ($response instanceof Response) {
                 $event->setResponse($response);
             } elseif (null !== $response) {
-                throw new \UnexpectedValueException(sprintf('The %s::onAuthenticationSuccess method must return null or a Response object', \get_class($this->simpleAuthenticator)));
+                throw new \UnexpectedValueException(sprintf('The "%s::onAuthenticationSuccess()" method must return null or a Response object.', \get_class($this->simpleAuthenticator)));
             }
         }
     }

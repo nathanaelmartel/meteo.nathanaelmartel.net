@@ -1,6 +1,38 @@
 CHANGELOG
 =========
 
+4.4.0
+-----
+
+ * added `CheckTypeDeclarationsPass` to check injected parameters type during compilation
+ * added support for opcache.preload by generating a preloading script in the cache folder
+ * added support for dumping the container in one file instead of many files
+ * deprecated support for short factories and short configurators in Yaml
+ * added `tagged_iterator` alias for `tagged` which might be deprecated in a future version
+ * deprecated passing an instance of `Symfony\Component\DependencyInjection\Parameter` as class name to `Symfony\Component\DependencyInjection\Definition`
+ * added support for binding iterable and tagged services
+ * made singly-implemented interfaces detection be scoped by file
+ * added ability to define a static priority method for tagged service
+ * added support for improved syntax to define method calls in Yaml
+ * made the `%env(base64:...)%` processor able to decode base64url
+ * added ability to choose behavior of decorations on non existent decorated services
+
+4.3.0
+-----
+
+ * added `%env(trim:...)%` processor to trim a string value
+ * added `%env(default:param_name:...)%` processor to fallback to a parameter or to null when using `%env(default::...)%`
+ * added `%env(url:...)%` processor to convert an URL or DNS into an array of components
+ * added `%env(query_string:...)%` processor to convert a query string into an array of key values
+ * added support for deprecating aliases
+ * made `ContainerParametersResource` final and not implement `Serializable` anymore
+ * added `ReverseContainer`: a container that turns services back to their ids
+ * added ability to define an index for a tagged collection
+ * added ability to define an index for services in an injected service locator argument
+ * made `ServiceLocator` implement `ServiceProviderInterface`
+ * deprecated support for non-string default env() parameters
+ * added `%env(require:...)%` processor to `require()` a PHP file and use the value returned from it
+
 4.2.0
 -----
 

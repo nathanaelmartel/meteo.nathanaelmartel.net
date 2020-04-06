@@ -46,6 +46,8 @@
     --base-4: #666;
     --base-5: #444;
     --base-6: #222;
+    --card-label-background: #eee;
+    --card-label-color: var(--base-6);
 }
 
 .theme-dark {
@@ -85,6 +87,8 @@
     --base-4: #666;
     --base-5: #e0e0e0;
     --base-6: #f5f5f5;
+    --card-label-background: var(--tab-active-background);
+    --card-label-color: var(--tab-active-color);
 }
 
 {# Basic styles
@@ -436,8 +440,8 @@ table tbody td.num-col {
     margin-top: 0;
 }
 .card .label {
-    background-color: #EEE;
-    color: var(--base-6);
+    background-color: var(--card-label-background);
+    color: var(--card-label-color);
 }
 
 {# Status
@@ -855,7 +859,7 @@ tr.status-warning td {
     font-size: 16px;
     padding: 4px;
     text-align: right;
-    width: 40px;
+    width: 5em;
 }
 #timeline-control .help {
     margin-left: 1em;
@@ -864,15 +868,6 @@ tr.status-warning td {
 .sf-profiler-timeline .legends {
     font-size: 12px;
     line-height: 1.5em;
-}
-.sf-profiler-timeline .legends span {
-    border-left: solid 14px;
-    padding: 0 10px 0 5px;
-}
-.sf-profiler-timeline canvas {
-    border: 1px solid var(--table-border);
-    background: var(--page-background);
-    margin: .5em 0;
 }
 .sf-profiler-timeline + p.help {
     margin-top: 0;

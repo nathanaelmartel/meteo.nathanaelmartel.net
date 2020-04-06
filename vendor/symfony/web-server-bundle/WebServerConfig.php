@@ -13,6 +13,8 @@ namespace Symfony\Bundle\WebServerBundle;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @deprecated since Symfony 4.4, to be removed in 5.0; the new Symfony local server has more features, you can use it instead.
  */
 class WebServerConfig
 {
@@ -29,7 +31,7 @@ class WebServerConfig
         }
 
         if (null === $file = $this->findFrontController($documentRoot, $env)) {
-            throw new \InvalidArgumentException(sprintf('Unable to find the front controller under "%s" (none of these files exist: %s).', $documentRoot, implode(', ', $this->getFrontControllerFileNames($env))));
+            throw new \InvalidArgumentException(sprintf('Unable to find the front controller under "%s" (none of these files exist: "%s").', $documentRoot, implode('", "', $this->getFrontControllerFileNames($env))));
         }
 
         $_ENV['APP_FRONT_CONTROLLER'] = $file;
@@ -117,7 +119,7 @@ class WebServerConfig
         return gethostbyname($localHostname).':'.$this->port;
     }
 
-    private function findFrontController($documentRoot, $env)
+    private function findFrontController(string $documentRoot, string $env): ?string
     {
         $fileNames = $this->getFrontControllerFileNames($env);
 
@@ -126,14 +128,16 @@ class WebServerConfig
                 return $fileName;
             }
         }
+
+        return null;
     }
 
-    private function getFrontControllerFileNames($env)
+    private function getFrontControllerFileNames(string $env): array
     {
         return ['app_'.$env.'.php', 'app.php', 'index_'.$env.'.php', 'index.php'];
     }
 
-    private function findBestPort()
+    private function findBestPort(): int
     {
         $port = 8000;
         while (false !== $fp = @fsockopen($this->hostname, $port, $errno, $errstr, 1)) {

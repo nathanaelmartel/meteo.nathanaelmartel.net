@@ -68,7 +68,7 @@ class FileLocator implements FileLocatorInterface
         }
 
         if (!$filepaths) {
-            throw new FileLocatorFileNotFoundException(sprintf('The file "%s" does not exist (in: %s).', $name, implode(', ', $paths)), 0, null, $notfound);
+            throw new FileLocatorFileNotFoundException(sprintf('The file "%s" does not exist (in: "%s").', $name, implode('", "', $paths)), 0, null, $notfound);
         }
 
         return $filepaths;
@@ -76,12 +76,8 @@ class FileLocator implements FileLocatorInterface
 
     /**
      * Returns whether the file path is an absolute path.
-     *
-     * @param string $file A file path
-     *
-     * @return bool
      */
-    private function isAbsolutePath($file)
+    private function isAbsolutePath(string $file): bool
     {
         if ('/' === $file[0] || '\\' === $file[0]
             || (\strlen($file) > 3 && ctype_alpha($file[0])

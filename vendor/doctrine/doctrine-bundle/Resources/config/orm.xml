@@ -75,10 +75,9 @@
     </parameters>
 
     <services>
-        <service id="Doctrine\Common\Persistence\ObjectManager" alias="doctrine.orm.entity_manager" public="false" />
         <service id="Doctrine\ORM\EntityManagerInterface" alias="doctrine.orm.entity_manager" public="false" />
 
-        <!--- Deprecated Annotation Metadata Reader Service alias, use annotation_reader service -->
+        <!--- Internal Annotation Metadata Reader Service alias, use annotation_reader service -->
         <service id="doctrine.orm.metadata.annotation_reader" alias="annotation_reader" public="false" />
 
         <service id="doctrine.orm.proxy_cache_warmer" class="%doctrine.orm.proxy_cache_warmer.class%" public="false">
@@ -138,6 +137,10 @@
         <!-- naming strategy -->
         <service id="doctrine.orm.naming_strategy.default" class="%doctrine.orm.naming_strategy.default.class%" public="false" />
         <service id="doctrine.orm.naming_strategy.underscore" class="%doctrine.orm.naming_strategy.underscore.class%" public="false" />
+        <service id="doctrine.orm.naming_strategy.underscore_number_aware" class="%doctrine.orm.naming_strategy.underscore.class%" public="false">
+            <argument type="constant">CASE_LOWER</argument>
+            <argument>true</argument>
+        </service>
 
         <!-- quote strategy -->
         <service id="doctrine.orm.quote_strategy.default" class="%doctrine.orm.quote_strategy.default.class%" public="false" />
@@ -180,10 +183,6 @@
             <tag name="console.command" command="doctrine:cache:clear-entity-region" />
         </service>
 
-        <service id="doctrine.database_import_command" class="Doctrine\Bundle\DoctrineBundle\Command\Proxy\ImportDoctrineCommand">
-            <tag name="console.command" command="doctrine:database:import" />
-        </service>
-
         <service id="doctrine.mapping_info_command" class="Doctrine\Bundle\DoctrineBundle\Command\Proxy\InfoDoctrineCommand">
             <tag name="console.command" command="doctrine:mapping:info" />
         </service>
@@ -210,12 +209,5 @@
 
             <tag name="console.command" command="doctrine:mapping:import" />
         </service>
-
-        <service id="doctrine.generate_entities_command" class="Doctrine\Bundle\DoctrineBundle\Command\GenerateEntitiesDoctrineCommand">
-            <argument type="service" id="doctrine" />
-
-            <tag name="console.command" command="doctrine:generate:entities" />
-        </service>
-
     </services>
 </container>

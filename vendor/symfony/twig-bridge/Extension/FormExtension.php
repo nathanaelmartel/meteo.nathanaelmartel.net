@@ -15,6 +15,7 @@ use Symfony\Bridge\Twig\TokenParser\FormThemeTokenParser;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Form\FormView;
 use Twig\Extension\AbstractExtension;
+use Twig\TokenParser\TokenParserInterface;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 use Twig\TwigTest;
@@ -24,11 +25,15 @@ use Twig\TwigTest;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @final since Symfony 4.4
  */
 class FormExtension extends AbstractExtension
 {
     /**
      * {@inheritdoc}
+     *
+     * @return TokenParserInterface[]
      */
     public function getTokenParsers()
     {
@@ -40,6 +45,8 @@ class FormExtension extends AbstractExtension
 
     /**
      * {@inheritdoc}
+     *
+     * @return TwigFunction[]
      */
     public function getFunctions()
     {
@@ -54,11 +61,14 @@ class FormExtension extends AbstractExtension
             new TwigFunction('form_start', null, ['node_class' => 'Symfony\Bridge\Twig\Node\RenderBlockNode', 'is_safe' => ['html']]),
             new TwigFunction('form_end', null, ['node_class' => 'Symfony\Bridge\Twig\Node\RenderBlockNode', 'is_safe' => ['html']]),
             new TwigFunction('csrf_token', ['Symfony\Component\Form\FormRenderer', 'renderCsrfToken']),
+            new TwigFunction('form_parent', 'Symfony\Bridge\Twig\Extension\twig_get_form_parent'),
         ];
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return TwigFilter[]
      */
     public function getFilters()
     {
@@ -70,6 +80,8 @@ class FormExtension extends AbstractExtension
 
     /**
      * {@inheritdoc}
+     *
+     * @return TwigTest[]
      */
     public function getTests()
     {
@@ -99,7 +111,7 @@ class FormExtension extends AbstractExtension
  *
  * @see ChoiceView::isSelected()
  */
-function twig_is_selected_choice(ChoiceView $choice, $selectedValue)
+function twig_is_selected_choice(ChoiceView $choice, $selectedValue): bool
 {
     if (\is_array($selectedValue)) {
         return \in_array($choice->value, $selectedValue, true);
@@ -111,7 +123,15 @@ function twig_is_selected_choice(ChoiceView $choice, $selectedValue)
 /**
  * @internal
  */
-function twig_is_root_form(FormView $formView)
+function twig_is_root_form(FormView $formView): bool
 {
     return null === $formView->parent;
+}
+
+/**
+ * @internal
+ */
+function twig_get_form_parent(FormView $formView): ?FormView
+{
+    return $formView->parent;
 }

@@ -1,10 +1,28 @@
 CHANGELOG
 =========
 
+4.4.0
+-----
+
+ * Added `anonymous: lazy` mode to firewalls to make them (not) start the session as late as possible
+ * Added `migrate_from` option to encoders configuration.
+ * Added new `argon2id` encoder, undeprecated the `bcrypt` and `argon2i` ones (using `auto` is still recommended by default.)
+ * Deprecated the usage of "query_string" without a "search_dn" and a "search_password" config key in Ldap factories.
+ * Marked the `SecurityDataCollector` class as `@final`.
+
+4.3.0
+-----
+
+ * Added new encoder types: `auto` (recommended), `native` and `sodium`
+ * The normalization of the cookie names configured in the `logout.delete_cookies`
+   option is deprecated and will be disabled in Symfony 5.0. This affects to cookies
+   with dashes in their names. For example, starting from Symfony 5.0, the `my-cookie`
+   name will delete `my-cookie` (with a dash) instead of `my_cookie` (with an underscore).
+
 4.2.0
 -----
 
- * Using the `security.authentication.trust_resolver.anonymous_class` and 
+ * Using the `security.authentication.trust_resolver.anonymous_class` and
    `security.authentication.trust_resolver.rememberme_class` parameters to define
    the token classes is deprecated. To use custom tokens extend the existing
    `Symfony\Component\Security\Core\Authentication\Token\AnonymousToken`.
@@ -17,7 +35,7 @@ CHANGELOG
  * Deprecated the `SimpleFormFactory` and `SimplePreAuthenticationFactory` classes, use Guard instead.
  * Added `port` in access_control
  * Added individual voter decisions to the profiler
- 
+
 4.1.0
 -----
 
@@ -51,7 +69,7 @@ CHANGELOG
  * Tagging voters with the `security.voter` tag without implementing the
    `VoterInterface` on the class is now deprecated and will be removed in 4.0.
  * [BC BREAK] `FirewallContext::getListeners()` now returns `\Traversable|array`
- * added info about called security listeners in profiler 
+ * added info about called security listeners in profiler
  * Added `logout_on_user_change` to the firewall options. This config item will
    trigger a logout when the user has changed. Should be set to true to avoid
    deprecations in the configuration.

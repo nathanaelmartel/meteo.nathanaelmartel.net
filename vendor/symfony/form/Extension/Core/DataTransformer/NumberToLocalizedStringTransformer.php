@@ -77,8 +77,9 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
     protected $roundingMode;
 
     private $scale;
+    private $locale;
 
-    public function __construct(int $scale = null, ?bool $grouping = false, ?int $roundingMode = self::ROUND_HALF_UP)
+    public function __construct(int $scale = null, ?bool $grouping = false, ?int $roundingMode = self::ROUND_HALF_UP, string $locale = null)
     {
         if (null === $grouping) {
             $grouping = false;
@@ -91,6 +92,7 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
         $this->scale = $scale;
         $this->grouping = $grouping;
         $this->roundingMode = $roundingMode;
+        $this->locale = $locale;
     }
 
     /**
@@ -143,11 +145,11 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
         }
 
         if ('' === $value) {
-            return;
+            return null;
         }
 
         if (\in_array($value, ['NaN', 'NAN', 'nan'], true)) {
-            throw new TransformationFailedException('"NaN" is not a valid number');
+            throw new TransformationFailedException('"NaN" is not a valid number.');
         }
 
         $position = 0;
@@ -178,7 +180,7 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
         }
 
         if ($result >= PHP_INT_MAX || $result <= -PHP_INT_MAX) {
-            throw new TransformationFailedException('I don\'t have a clear idea what infinity looks like');
+            throw new TransformationFailedException('I don\'t have a clear idea what infinity looks like.');
         }
 
         $result = $this->castParsedValue($result);
@@ -199,7 +201,7 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
             $remainder = trim($remainder, " \t\n\r\0\x0b\xc2\xa0");
 
             if ('' !== $remainder) {
-                throw new TransformationFailedException(sprintf('The number contains unrecognized characters: "%s"', $remainder));
+                throw new TransformationFailedException(sprintf('The number contains unrecognized characters: "%s".', $remainder));
             }
         }
 
@@ -214,7 +216,7 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
      */
     protected function getNumberFormatter()
     {
-        $formatter = new \NumberFormatter(\Locale::getDefault(), \NumberFormatter::DECIMAL);
+        $formatter = new \NumberFormatter($this->locale ?? \Locale::getDefault(), \NumberFormatter::DECIMAL);
 
         if (null !== $this->scale) {
             $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, $this->scale);
@@ -277,7 +279,7 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
                     break;
             }
 
-            $number /= $roundingCoef;
+            $number = 1 === $roundingCoef ? (int) $number : $number / $roundingCoef;
         }
 
         return $number;

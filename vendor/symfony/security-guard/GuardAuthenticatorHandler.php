@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\Security\Guard;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -21,6 +21,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
 use Symfony\Component\Security\Http\SecurityEvents;
 use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategyInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * A utility class that does much of the *work* during the guard authentication process.
@@ -45,14 +46,18 @@ class GuardAuthenticatorHandler
     public function __construct(TokenStorageInterface $tokenStorage, EventDispatcherInterface $eventDispatcher = null, array $statelessProviderKeys = [])
     {
         $this->tokenStorage = $tokenStorage;
-        $this->dispatcher = $eventDispatcher;
+
+        if (null !== $eventDispatcher && class_exists(LegacyEventDispatcherProxy::class)) {
+            $this->dispatcher = LegacyEventDispatcherProxy::decorate($eventDispatcher);
+        } else {
+            $this->dispatcher = $eventDispatcher;
+        }
+
         $this->statelessProviderKeys = $statelessProviderKeys;
     }
 
     /**
      * Authenticates the given token in the system.
-     *
-     * @param string $providerKey The name of the provider/firewall being used for authentication
      */
     public function authenticateWithToken(TokenInterface $token, Request $request, string $providerKey = null)
     {
@@ -61,7 +66,7 @@ class GuardAuthenticatorHandler
 
         if (null !== $this->dispatcher) {
             $loginEvent = new InteractiveLoginEvent($request, $token);
-            $this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
+            $this->dispatcher->dispatch($loginEvent, SecurityEvents::INTERACTIVE_LOGIN);
         }
     }
 
@@ -77,7 +82,7 @@ class GuardAuthenticatorHandler
             return $response;
         }
 
-        throw new \UnexpectedValueException(sprintf('The %s::onAuthenticationSuccess method must return null or a Response object. You returned %s.', \get_class($guardAuthenticator), \is_object($response) ? \get_class($response) : \gettype($response)));
+        throw new \UnexpectedValueException(sprintf('The "%s::onAuthenticationSuccess()" method must return null or a Response object. You returned "%s".', \get_class($guardAuthenticator), \is_object($response) ? \get_class($response) : \gettype($response)));
     }
 
     /**
@@ -107,7 +112,7 @@ class GuardAuthenticatorHandler
             return $response;
         }
 
-        throw new \UnexpectedValueException(sprintf('The %s::onAuthenticationFailure method must return null or a Response object. You returned %s.', \get_class($guardAuthenticator), \is_object($response) ? \get_class($response) : \gettype($response)));
+        throw new \UnexpectedValueException(sprintf('The "%s::onAuthenticationFailure()" method must return null or a Response object. You returned "%s".', \get_class($guardAuthenticator), \is_object($response) ? \get_class($response) : \gettype($response)));
     }
 
     /**
@@ -120,9 +125,9 @@ class GuardAuthenticatorHandler
         $this->sessionStrategy = $sessionStrategy;
     }
 
-    private function migrateSession(Request $request, TokenInterface $token, $providerKey)
+    private function migrateSession(Request $request, TokenInterface $token, ?string $providerKey)
     {
-        if (!$this->sessionStrategy || !$request->hasSession() || !$request->hasPreviousSession() || \in_array($providerKey, $this->statelessProviderKeys, true)) {
+        if (\in_array($providerKey, $this->statelessProviderKeys, true) || !$this->sessionStrategy || !$request->hasSession() || !$request->hasPreviousSession()) {
             return;
         }
 

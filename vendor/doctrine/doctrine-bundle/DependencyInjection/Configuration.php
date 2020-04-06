@@ -10,6 +10,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\Exception\LogicException;
 use function array_key_exists;
+use function in_array;
 use function is_array;
 
 /**
@@ -34,16 +35,10 @@ class Configuration implements ConfigurationInterface
     /**
      * {@inheritDoc}
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder() : TreeBuilder
     {
         $treeBuilder = new TreeBuilder('doctrine');
-
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $rootNode = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $rootNode = $treeBuilder->root('doctrine');
-        }
+        $rootNode    = $treeBuilder->getRootNode();
 
         $this->addDbalSection($rootNode);
         $this->addOrmSection($rootNode);
@@ -54,7 +49,7 @@ class Configuration implements ConfigurationInterface
     /**
      * Add DBAL section to configuration tree
      */
-    private function addDbalSection(ArrayNodeDefinition $node)
+    private function addDbalSection(ArrayNodeDefinition $node) : void
     {
         $node
             ->children()
@@ -96,7 +91,7 @@ class Configuration implements ConfigurationInterface
                             ->end()
                             ->children()
                                 ->scalarNode('class')->isRequired()->end()
-                                ->booleanNode('commented')->defaultNull()->end()
+                                ->booleanNode('commented')->setDeprecated()->end()
                             ->end()
                         ->end()
                     ->end()
@@ -108,19 +103,11 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Return the dbal connections node
-     *
-     * @return ArrayNodeDefinition
      */
-    private function getDbalConnectionsNode()
+    private function getDbalConnectionsNode() : ArrayNodeDefinition
     {
         $treeBuilder = new TreeBuilder('connections');
-
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $node = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $node = $treeBuilder->root('connections');
-        }
+        $node        = $treeBuilder->getRootNode();
 
         /** @var ArrayNodeDefinition $connectionNode */
         $connectionNode = $node
@@ -156,7 +143,7 @@ class Configuration implements ConfigurationInterface
                 ->booleanNode('keep_slave')->end()
                 ->arrayNode('options')
                     ->useAttributeAsKey('key')
-                    ->prototype('scalar')->end()
+                    ->prototype('variable')->end()
                 ->end()
                 ->arrayNode('mapping_types')
                     ->useAttributeAsKey('name')
@@ -196,7 +183,7 @@ class Configuration implements ConfigurationInterface
      *
      * These keys are available for slave configurations too.
      */
-    private function configureDbalDriverNode(ArrayNodeDefinition $node)
+    private function configureDbalDriverNode(ArrayNodeDefinition $node) : void
     {
         $node
             ->children()
@@ -306,7 +293,7 @@ class Configuration implements ConfigurationInterface
     /**
      * Add the ORM section to configuration tree
      */
-    private function addOrmSection(ArrayNodeDefinition $node)
+    private function addOrmSection(ArrayNodeDefinition $node) : void
     {
         $node
             ->children()
@@ -388,19 +375,11 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Return ORM target entity resolver node
-     *
-     * @return NodeDefinition
      */
-    private function getOrmTargetEntityResolverNode()
+    private function getOrmTargetEntityResolverNode() : NodeDefinition
     {
         $treeBuilder = new TreeBuilder('resolve_target_entities');
-
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $node = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $node = $treeBuilder->root('resolve_target_entities');
-        }
+        $node        = $treeBuilder->getRootNode();
 
         $node
             ->useAttributeAsKey('interface')
@@ -413,19 +392,11 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Return ORM entity listener node
-     *
-     * @return NodeDefinition
      */
-    private function getOrmEntityListenersNode()
+    private function getOrmEntityListenersNode() : NodeDefinition
     {
         $treeBuilder = new TreeBuilder('entity_listeners');
-
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $node = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $node = $treeBuilder->root('entity_listeners');
-        }
+        $node        = $treeBuilder->getRootNode();
 
         $normalizer = static function ($mappings) {
             $entities = [];
@@ -505,19 +476,11 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Return ORM entity manager node
-     *
-     * @return ArrayNodeDefinition
      */
-    private function getOrmEntityManagersNode()
+    private function getOrmEntityManagersNode() : ArrayNodeDefinition
     {
         $treeBuilder = new TreeBuilder('entity_managers');
-
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $node = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $node = $treeBuilder->root('entity_managers');
-        }
+        $node        = $treeBuilder->getRootNode();
 
         $node
             ->requiresAtLeastOneElement()
@@ -673,21 +636,11 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Return a ORM cache driver node for an given entity manager
-     *
-     * @param string $name
-     *
-     * @return ArrayNodeDefinition
      */
-    private function getOrmCacheDriverNode($name)
+    private function getOrmCacheDriverNode(string $name) : ArrayNodeDefinition
     {
         $treeBuilder = new TreeBuilder($name);
-
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $node = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $node = $treeBuilder->root($name);
-        }
+        $node        = $treeBuilder->getRootNode();
 
         $node
             ->addDefaultsIfNotSet()
@@ -697,25 +650,10 @@ class Configuration implements ConfigurationInterface
                     return ['type' => $v];
                 })
             ->end()
-            ->beforeNormalization()
-                ->ifTrue(static function ($v) : bool {
-                    return is_array($v) && array_key_exists('cache_provider', $v);
-                })
-                ->then(static function ($v) : array {
-                    return ['type' => 'provider'] + $v;
-                })
-            ->end()
             ->children()
-                ->scalarNode('type')->defaultValue('array')->end()
+                ->scalarNode('type')->defaultNull()->end()
                 ->scalarNode('id')->end()
                 ->scalarNode('pool')->end()
-                ->scalarNode('host')->end()
-                ->scalarNode('port')->end()
-                ->scalarNode('database')->end()
-                ->scalarNode('instance_class')->end()
-                ->scalarNode('class')->end()
-                ->scalarNode('namespace')->defaultNull()->end()
-                ->scalarNode('cache_provider')->defaultNull()->end()
             ->end();
 
         return $node;
@@ -723,10 +661,8 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Find proxy auto generate modes for their names and int values
-     *
-     * @return array
      */
-    private function getAutoGenerateModes()
+    private function getAutoGenerateModes() : array
     {
         $constPrefix = 'AUTOGENERATE_';
         $prefixLen   = strlen($constPrefix);

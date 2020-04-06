@@ -53,6 +53,8 @@ trait ArrayTrait
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function hasItem($key)
     {
@@ -66,16 +68,32 @@ trait ArrayTrait
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $prefix
+     *
+     * @return bool
      */
-    public function clear()
+    public function clear(/*string $prefix = ''*/)
     {
-        $this->values = $this->expiries = [];
+        $prefix = 0 < \func_num_args() ? (string) func_get_arg(0) : '';
+
+        if ('' !== $prefix) {
+            foreach ($this->values as $key => $value) {
+                if (0 === strpos($key, $prefix)) {
+                    unset($this->values[$key], $this->expiries[$key]);
+                }
+            }
+        } else {
+            $this->values = $this->expiries = [];
+        }
 
         return true;
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function deleteItem($key)
     {
@@ -95,7 +113,7 @@ trait ArrayTrait
         $this->clear();
     }
 
-    private function generateItems(array $keys, $now, $f)
+    private function generateItems(array $keys, float $now, callable $f): iterable
     {
         foreach ($keys as $i => $key) {
             if (!$isHit = isset($this->expiries[$key]) && ($this->expiries[$key] > $now || !$this->deleteItem($key))) {
@@ -128,9 +146,10 @@ trait ArrayTrait
                 $serialized = serialize($value);
             } catch (\Exception $e) {
                 $type = \is_object($value) ? \get_class($value) : \gettype($value);
-                CacheItem::log($this->logger, 'Failed to save key "{key}" ({type})', ['key' => $key, 'type' => $type, 'exception' => $e]);
+                $message = sprintf('Failed to save key "{key}" of type %s: %s', $type, $e->getMessage());
+                CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e]);
 
-                return;
+                return null;
             }
             // Keep value serialized if it contains any objects or any internal references
             if ('C' === $serialized[0] || 'O' === $serialized[0] || preg_match('/;[OCRr]:[1-9]/', $serialized)) {
@@ -150,7 +169,7 @@ trait ArrayTrait
             try {
                 $value = unserialize($value);
             } catch (\Exception $e) {
-                CacheItem::log($this->logger, 'Failed to unserialize key "{key}"', ['key' => $key, 'exception' => $e]);
+                CacheItem::log($this->logger, 'Failed to unserialize key "{key}": '.$e->getMessage(), ['key' => $key, 'exception' => $e]);
                 $value = false;
             }
             if (false === $value) {

@@ -26,18 +26,22 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
  * Runs a local web server in a background process.
  *
  * @author Christian Flothmann <christian.flothmann@xabbuh.de>
+ *
+ * @deprecated since Symfony 4.4, to be removed in 5.0; the new Symfony local server has more features, you can use it instead.
  */
 class ServerStartCommand extends Command
 {
     private $documentRoot;
     private $environment;
+    private $pidFileDirectory;
 
     protected static $defaultName = 'server:start';
 
-    public function __construct(string $documentRoot = null, string $environment = null)
+    public function __construct(string $documentRoot = null, string $environment = null, string $pidFileDirectory = null)
     {
         $this->documentRoot = $documentRoot;
         $this->environment = $environment;
+        $this->pidFileDirectory = $pidFileDirectory;
 
         parent::__construct();
     }
@@ -77,7 +81,7 @@ Specify your own router script via the <info>--router</info> option:
 
   <info>php %command.full_name% --router=app/config/router.php</info>
 
-See also: http://www.php.net/manual/en/features.commandline.webserver.php
+See also: https://php.net/features.commandline.webserver
 EOF
             )
         ;
@@ -88,6 +92,8 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        @trigger_error('Using the WebserverBundle is deprecated since Symfony 4.4. The new Symfony local server has more features, you can use it instead.', E_USER_DEPRECATED);
+
         $io = new SymfonyStyle($input, $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output);
 
         if (!\extension_loaded('pcntl')) {
@@ -133,7 +139,7 @@ EOF
         $this->getApplication()->setDispatcher(new EventDispatcher());
 
         try {
-            $server = new WebServer();
+            $server = new WebServer($this->pidFileDirectory);
             if ($server->isRunning($input->getOption('pidfile'))) {
                 $io->error(sprintf('The web server has already been started. It is currently listening on http://%s. Please stop the web server before you try to start it again.', $server->getAddress($input->getOption('pidfile'))));
 
@@ -157,5 +163,7 @@ EOF
 
             return 1;
         }
+
+        return 0;
     }
 }

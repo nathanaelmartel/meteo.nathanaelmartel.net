@@ -22,6 +22,7 @@ use Symfony\Component\Form\Console\Helper\DescriptorHelper;
 use Symfony\Component\Form\Extension\Core\CoreExtension;
 use Symfony\Component\Form\FormRegistryInterface;
 use Symfony\Component\Form\FormTypeInterface;
+use Symfony\Component\HttpKernel\Debug\FileLinkFormatter;
 
 /**
  * A console command for retrieving information about form types.
@@ -37,8 +38,9 @@ class DebugCommand extends Command
     private $types;
     private $extensions;
     private $guessers;
+    private $fileLinkFormatter;
 
-    public function __construct(FormRegistryInterface $formRegistry, array $namespaces = ['Symfony\Component\Form\Extension\Core\Type'], array $types = [], array $extensions = [], array $guessers = [])
+    public function __construct(FormRegistryInterface $formRegistry, array $namespaces = ['Symfony\Component\Form\Extension\Core\Type'], array $types = [], array $extensions = [], array $guessers = [], FileLinkFormatter $fileLinkFormatter = null)
     {
         parent::__construct();
 
@@ -47,6 +49,7 @@ class DebugCommand extends Command
         $this->types = $types;
         $this->extensions = $extensions;
         $this->guessers = $guessers;
+        $this->fileLinkFormatter = $fileLinkFormatter;
     }
 
     /**
@@ -115,7 +118,7 @@ EOF
                 sort($options[$k]);
             }
         } else {
-            if (!class_exists($class)) {
+            if (!class_exists($class) || !is_subclass_of($class, FormTypeInterface::class)) {
                 $class = $this->getFqcnTypeClass($input, $io, $class);
             }
             $resolvedType = $this->formRegistry->getType($class);
@@ -145,18 +148,26 @@ EOF
             }
         }
 
-        $helper = new DescriptorHelper();
+        $helper = new DescriptorHelper($this->fileLinkFormatter);
         $options['format'] = $input->getOption('format');
         $options['show_deprecated'] = $input->getOption('show-deprecated');
         $helper->describe($io, $object, $options);
+
+        return 0;
     }
 
-    private function getFqcnTypeClass(InputInterface $input, SymfonyStyle $io, $shortClassName)
+    private function getFqcnTypeClass(InputInterface $input, SymfonyStyle $io, string $shortClassName): string
     {
         $classes = [];
         sort($this->namespaces);
         foreach ($this->namespaces as $namespace) {
             if (class_exists($fqcn = $namespace.'\\'.$shortClassName)) {
+                $classes[] = $fqcn;
+            } elseif (class_exists($fqcn = $namespace.'\\'.ucfirst($shortClassName))) {
+                $classes[] = $fqcn;
+            } elseif (class_exists($fqcn = $namespace.'\\'.ucfirst($shortClassName).'Type')) {
+                $classes[] = $fqcn;
+            } elseif ('type' === substr($shortClassName, -4) && class_exists($fqcn = $namespace.'\\'.ucfirst(substr($shortClassName, 0, -4).'Type'))) {
                 $classes[] = $fqcn;
             }
         }
@@ -180,13 +191,13 @@ EOF
             return $classes[0];
         }
         if (!$input->isInteractive()) {
-            throw new InvalidArgumentException(sprintf("The type \"%s\" is ambiguous.\n\nDid you mean one of these?\n    %s", $shortClassName, implode("\n    ", $classes)));
+            throw new InvalidArgumentException(sprintf("The type \"%s\" is ambiguous.\n\nDid you mean one of these?\n    %s.", $shortClassName, implode("\n    ", $classes)));
         }
 
         return $io->choice(sprintf("The type \"%s\" is ambiguous.\n\nSelect one of the following form types to display its information:", $shortClassName), $classes, $classes[0]);
     }
 
-    private function getCoreTypes()
+    private function getCoreTypes(): array
     {
         $coreExtension = new CoreExtension();
         $loadTypesRefMethod = (new \ReflectionObject($coreExtension))->getMethod('loadTypes');
@@ -214,7 +225,7 @@ EOF
         return $typesWithDeprecatedOptions;
     }
 
-    private function findAlternatives($name, array $collection)
+    private function findAlternatives(string $name, array $collection): array
     {
         $alternatives = [];
         foreach ($collection as $item) {

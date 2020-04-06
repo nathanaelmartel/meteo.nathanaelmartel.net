@@ -14,6 +14,7 @@ namespace Symfony\Bundle\FrameworkBundle\Command;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
@@ -26,6 +27,9 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
  */
 abstract class AbstractConfigCommand extends ContainerDebugCommand
 {
+    /**
+     * @param OutputInterface|StyleInterface $output
+     */
     protected function listBundles($output)
     {
         $title = 'Available registered bundles with their extension alias if available';
@@ -108,11 +112,11 @@ abstract class AbstractConfigCommand extends ContainerDebugCommand
     public function validateConfiguration(ExtensionInterface $extension, $configuration)
     {
         if (!$configuration) {
-            throw new \LogicException(sprintf('The extension with alias "%s" does not have its getConfiguration() method setup', $extension->getAlias()));
+            throw new \LogicException(sprintf('The extension with alias "%s" does not have its getConfiguration() method setup.', $extension->getAlias()));
         }
 
         if (!$configuration instanceof ConfigurationInterface) {
-            throw new \LogicException(sprintf('Configuration class "%s" should implement ConfigurationInterface in order to be dumpable', \get_class($configuration)));
+            throw new \LogicException(sprintf('Configuration class "%s" should implement ConfigurationInterface in order to be dumpable.', \get_class($configuration)));
         }
     }
 

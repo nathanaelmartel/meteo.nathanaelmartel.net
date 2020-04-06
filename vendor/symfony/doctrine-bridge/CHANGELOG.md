@@ -1,6 +1,23 @@
 CHANGELOG
 =========
 
+4.4.0
+-----
+
+ * [BC BREAK] using null as `$classValidatorRegexp` value in `DoctrineLoader::__construct` will not enable auto-mapping for all classes anymore, use `'{.*}'` instead.
+ * added `DoctrineClearEntityManagerWorkerSubscriber`
+ * deprecated `RegistryInterface`, use `Doctrine\Persistence\ManagerRegistry`
+ * added support for invokable event listeners
+ * added `getMetadataDriverClass` method to deprecate class parameters in service configuration files
+
+4.3.0
+-----
+
+ * changed guessing of DECIMAL to set the `input` option of `NumberType` to string
+ * deprecated not passing an `IdReader` to the `DoctrineChoiceLoader` when query can be optimized with a single id field
+ * deprecated passing an `IdReader` to the `DoctrineChoiceLoader` when entities have a composite id
+ * added two Messenger middleware: `DoctrinePingConnectionMiddleware` and `DoctrineCloseConnectionMiddleware`
+
 4.2.0
 -----
 

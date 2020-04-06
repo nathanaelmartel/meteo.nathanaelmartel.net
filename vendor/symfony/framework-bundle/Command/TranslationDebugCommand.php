@@ -50,14 +50,16 @@ class TranslationDebugCommand extends Command
     private $extractor;
     private $defaultTransPath;
     private $defaultViewsPath;
+    private $transPaths;
+    private $viewsPaths;
 
     /**
      * @param TranslatorInterface $translator
      */
-    public function __construct($translator, TranslationReaderInterface $reader, ExtractorInterface $extractor, string $defaultTransPath = null, string $defaultViewsPath = null)
+    public function __construct($translator, TranslationReaderInterface $reader, ExtractorInterface $extractor, string $defaultTransPath = null, string $defaultViewsPath = null, array $transPaths = [], array $viewsPaths = [])
     {
         if (!$translator instanceof LegacyTranslatorInterface && !$translator instanceof TranslatorInterface) {
-            throw new \TypeError(sprintf('Argument 1 passed to %s() must be an instance of %s, %s given.', __METHOD__, TranslatorInterface::class, \is_object($translator) ? \get_class($translator) : \gettype($translator)));
+            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be an instance of "%s", "%s" given.', __METHOD__, TranslatorInterface::class, \is_object($translator) ? \get_class($translator) : \gettype($translator)));
         }
         parent::__construct();
 
@@ -66,6 +68,8 @@ class TranslationDebugCommand extends Command
         $this->extractor = $extractor;
         $this->defaultTransPath = $defaultTransPath;
         $this->defaultViewsPath = $defaultViewsPath;
+        $this->transPaths = $transPaths;
+        $this->viewsPaths = $viewsPaths;
     }
 
     /**
@@ -120,7 +124,7 @@ EOF
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
@@ -131,7 +135,7 @@ EOF
         $rootDir = $kernel->getContainer()->getParameter('kernel.root_dir');
 
         // Define Root Paths
-        $transPaths = [];
+        $transPaths = $this->transPaths;
         if (is_dir($dir = $rootDir.'/Resources/translations')) {
             if ($dir !== $this->defaultTransPath) {
                 $notice = sprintf('Storing translations in the "%s" directory is deprecated since Symfony 4.2, ', $dir);
@@ -142,7 +146,7 @@ EOF
         if ($this->defaultTransPath) {
             $transPaths[] = $this->defaultTransPath;
         }
-        $viewsPaths = [];
+        $viewsPaths = $this->viewsPaths;
         if (is_dir($dir = $rootDir.'/Resources/views')) {
             if ($dir !== $this->defaultViewsPath) {
                 $notice = sprintf('Loading Twig templates from the "%s" directory is deprecated since Symfony 4.2, ', $dir);
@@ -158,7 +162,9 @@ EOF
         if (null !== $input->getArgument('bundle')) {
             try {
                 $bundle = $kernel->getBundle($input->getArgument('bundle'));
-                $transPaths = [$bundle->getPath().'/Resources/translations'];
+                $bundleDir = $bundle->getPath();
+                $transPaths = [is_dir($bundleDir.'/Resources/translations') ? $bundleDir.'/Resources/translations' : $bundleDir.'/translations'];
+                $viewsPaths = [is_dir($bundleDir.'/Resources/views') ? $bundleDir.'/Resources/views' : $bundleDir.'/templates'];
                 if ($this->defaultTransPath) {
                     $transPaths[] = $this->defaultTransPath;
                 }
@@ -167,7 +173,6 @@ EOF
                     $notice = sprintf('Storing translations files for "%s" in the "%s" directory is deprecated since Symfony 4.2, ', $dir, $bundle->getName());
                     @trigger_error($notice.($this->defaultTransPath ? sprintf('use the "%s" directory instead.', $this->defaultTransPath) : 'configure and use "framework.translator.default_path" instead.'), E_USER_DEPRECATED);
                 }
-                $viewsPaths = [$bundle->getPath().'/Resources/views'];
                 if ($this->defaultViewsPath) {
                     $viewsPaths[] = $this->defaultViewsPath;
                 }
@@ -202,13 +207,14 @@ EOF
             }
         } elseif ($input->getOption('all')) {
             foreach ($kernel->getBundles() as $bundle) {
-                $transPaths[] = $bundle->getPath().'/Resources/translations';
+                $bundleDir = $bundle->getPath();
+                $transPaths[] = is_dir($bundleDir.'/Resources/translations') ? $bundleDir.'/Resources/translations' : $bundle->getPath().'/translations';
+                $viewsPaths[] = is_dir($bundleDir.'/Resources/views') ? $bundleDir.'/Resources/views' : $bundle->getPath().'/templates';
                 if (is_dir($deprecatedPath = sprintf('%s/Resources/%s/translations', $rootDir, $bundle->getName()))) {
                     $transPaths[] = $deprecatedPath;
                     $notice = sprintf('Storing translations files for "%s" in the "%s" directory is deprecated since Symfony 4.2, ', $bundle->getName(), $deprecatedPath);
                     @trigger_error($notice.($this->defaultTransPath ? sprintf('use the "%s" directory instead.', $this->defaultTransPath) : 'configure and use "framework.translator.default_path" instead.'), E_USER_DEPRECATED);
                 }
-                $viewsPaths[] = $bundle->getPath().'/Resources/views';
                 if (is_dir($deprecatedPath = sprintf('%s/Resources/%s/views', $rootDir, $bundle->getName()))) {
                     $viewsPaths[] = $deprecatedPath;
                     $notice = sprintf('Loading Twig templates for "%s" from the "%s" directory is deprecated since Symfony 4.2, ', $bundle->getName(), $deprecatedPath);
@@ -240,7 +246,7 @@ EOF
 
             $io->getErrorStyle()->warning($outputMessage);
 
-            return;
+            return 0;
         }
 
         // Load the fallback catalogues
@@ -289,9 +295,11 @@ EOF
         }
 
         $io->table($headers, $rows);
+
+        return 0;
     }
 
-    private function formatState($state): string
+    private function formatState(int $state): string
     {
         if (self::MESSAGE_MISSING === $state) {
             return '<error> missing </error>';
@@ -342,7 +350,7 @@ EOF
     {
         $extractedCatalogue = new MessageCatalogue($locale);
         foreach ($transPaths as $path) {
-            if (is_dir($path)) {
+            if (is_dir($path) || is_file($path)) {
                 $this->extractor->extract($path, $extractedCatalogue);
             }
         }

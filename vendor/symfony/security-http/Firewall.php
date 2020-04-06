@@ -15,7 +15,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Http\Firewall\AbstractListener;
 use Symfony\Component\Security\Http\Firewall\AccessListener;
 use Symfony\Component\Security\Http\Firewall\LogoutListener;
 
@@ -37,11 +39,16 @@ class Firewall implements EventSubscriberInterface
 
     public function __construct(FirewallMapInterface $map, EventDispatcherInterface $dispatcher)
     {
+        // the type-hint will be updated to the "EventDispatcherInterface" from symfony/contracts in 5.0
+
         $this->map = $map;
         $this->dispatcher = $dispatcher;
         $this->exceptionListeners = new \SplObjectStorage();
     }
 
+    /**
+     * @internal since Symfony 4.3
+     */
     public function onKernelRequest(GetResponseEvent $event)
     {
         if (!$event->isMasterRequest()) {
@@ -87,9 +94,16 @@ class Firewall implements EventSubscriberInterface
             }
         };
 
-        $this->handleRequest($event, $authenticationListeners());
+        if ($event instanceof RequestEvent) {
+            $this->callListeners($event, $authenticationListeners());
+        } else {
+            $this->handleRequest($event, $authenticationListeners());
+        }
     }
 
+    /**
+     * @internal since Symfony 4.3
+     */
     public function onKernelFinishRequest(FinishRequestEvent $event)
     {
         $request = $event->getRequest();
@@ -111,10 +125,23 @@ class Firewall implements EventSubscriberInterface
         ];
     }
 
+    protected function callListeners(RequestEvent $event, iterable $listeners)
+    {
+        $this->handleRequest($event, $listeners);
+    }
+
+    /**
+     * @deprecated since Symfony 4.3, use callListeners instead
+     */
     protected function handleRequest(GetResponseEvent $event, $listeners)
     {
         foreach ($listeners as $listener) {
-            $listener->handle($event);
+            if (\is_callable($listener)) {
+                $listener($event);
+            } else {
+                @trigger_error(sprintf('Calling the "%s::handle()" method from the firewall is deprecated since Symfony 4.3, extend "%s" instead.', \get_class($listener), AbstractListener::class), E_USER_DEPRECATED);
+                $listener->handle($event);
+            }
 
             if ($event->hasResponse()) {
                 break;

@@ -12,12 +12,17 @@
 namespace Symfony\Component\Security\Core\Authentication\Token;
 
 use Symfony\Component\Security\Core\Role\Role;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * TokenInterface is the interface for the user authentication information.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
+ *
+ * @method array    __serialize()                                                                             Returns all the necessary state of the object for serialization purposes - not implementing it is deprecated since Symfony 4.3
+ * @method void     __unserialize(array $data) Restores the object state from an array given by __serialize() - not implementing it is deprecated since Symfony 4.3
+ * @method string[] getRoleNames()                                                                            The associated roles - not implementing it is deprecated since Symfony 4.3
  */
 interface TokenInterface extends \Serializable
 {
@@ -34,6 +39,8 @@ interface TokenInterface extends \Serializable
      * Returns the user roles.
      *
      * @return Role[] An array of Role instances
+     *
+     * @deprecated since Symfony 4.3, use the getRoleNames() method instead
      */
     public function getRoles();
 
@@ -47,8 +54,7 @@ interface TokenInterface extends \Serializable
     /**
      * Returns a user representation.
      *
-     * @return string|object Can be a UserInterface instance, an object implementing a __toString method,
-     *                       or the username as a regular string
+     * @return string|\Stringable|UserInterface
      *
      * @see AbstractToken::setUser()
      */
@@ -60,7 +66,7 @@ interface TokenInterface extends \Serializable
      * The user can be a UserInterface instance, or an object implementing
      * a __toString method or the username as a regular string.
      *
-     * @param string|object $user The user
+     * @param string|\Stringable|UserInterface $user
      *
      * @throws \InvalidArgumentException
      */

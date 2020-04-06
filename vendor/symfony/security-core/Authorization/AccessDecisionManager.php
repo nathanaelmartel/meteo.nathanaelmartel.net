@@ -53,10 +53,19 @@ class AccessDecisionManager implements AccessDecisionManagerInterface
     }
 
     /**
+     * @param bool $allowMultipleAttributes Whether to allow passing multiple values to the $attributes array
+     *
      * {@inheritdoc}
      */
-    public function decide(TokenInterface $token, array $attributes, $object = null)
+    public function decide(TokenInterface $token, array $attributes, $object = null/*, bool $allowMultipleAttributes = false*/)
     {
+        $allowMultipleAttributes =  3 < func_num_args() && func_get_arg(3);
+
+        // Special case for AccessListener, do not remove the right side of the condition before 6.0
+        if (\count($attributes) > 1 && !$allowMultipleAttributes) {
+            @trigger_error(sprintf('Passing more than one Security attribute to "%s()" is deprecated since Symfony 4.4. Use multiple "decide()" calls or the expression language (e.g. "is_granted(...) or is_granted(...)") instead.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         return $this->{$this->strategy}($token, $attributes, $object);
     }
 
@@ -66,22 +75,18 @@ class AccessDecisionManager implements AccessDecisionManagerInterface
      * If all voters abstained from voting, the decision will be based on the
      * allowIfAllAbstainDecisions property value (defaults to false).
      */
-    private function decideAffirmative(TokenInterface $token, array $attributes, $object = null)
+    private function decideAffirmative(TokenInterface $token, array $attributes, $object = null): bool
     {
         $deny = 0;
         foreach ($this->voters as $voter) {
             $result = $voter->vote($token, $object, $attributes);
-            switch ($result) {
-                case VoterInterface::ACCESS_GRANTED:
-                    return true;
 
-                case VoterInterface::ACCESS_DENIED:
-                    ++$deny;
+            if (VoterInterface::ACCESS_GRANTED === $result) {
+                return true;
+            }
 
-                    break;
-
-                default:
-                    break;
+            if (VoterInterface::ACCESS_DENIED === $result) {
+                ++$deny;
             }
         }
 
@@ -106,23 +111,17 @@ class AccessDecisionManager implements AccessDecisionManagerInterface
      * If all voters abstained from voting, the decision will be based on the
      * allowIfAllAbstainDecisions property value (defaults to false).
      */
-    private function decideConsensus(TokenInterface $token, array $attributes, $object = null)
+    private function decideConsensus(TokenInterface $token, array $attributes, $object = null): bool
     {
         $grant = 0;
         $deny = 0;
         foreach ($this->voters as $voter) {
             $result = $voter->vote($token, $object, $attributes);
 
-            switch ($result) {
-                case VoterInterface::ACCESS_GRANTED:
-                    ++$grant;
-
-                    break;
-
-                case VoterInterface::ACCESS_DENIED:
-                    ++$deny;
-
-                    break;
+            if (VoterInterface::ACCESS_GRANTED === $result) {
+                ++$grant;
+            } elseif (VoterInterface::ACCESS_DENIED === $result) {
+                ++$deny;
             }
         }
 
@@ -147,24 +146,19 @@ class AccessDecisionManager implements AccessDecisionManagerInterface
      * If all voters abstained from voting, the decision will be based on the
      * allowIfAllAbstainDecisions property value (defaults to false).
      */
-    private function decideUnanimous(TokenInterface $token, array $attributes, $object = null)
+    private function decideUnanimous(TokenInterface $token, array $attributes, $object = null): bool
     {
         $grant = 0;
         foreach ($this->voters as $voter) {
             foreach ($attributes as $attribute) {
                 $result = $voter->vote($token, $object, [$attribute]);
 
-                switch ($result) {
-                    case VoterInterface::ACCESS_GRANTED:
-                        ++$grant;
+                if (VoterInterface::ACCESS_DENIED === $result) {
+                    return false;
+                }
 
-                        break;
-
-                    case VoterInterface::ACCESS_DENIED:
-                        return false;
-
-                    default:
-                        break;
+                if (VoterInterface::ACCESS_GRANTED === $result) {
+                    ++$grant;
                 }
             }
         }

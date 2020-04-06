@@ -16,16 +16,16 @@ use Symfony\Component\BrowserKit\History;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Client as BaseClient;
+use Symfony\Component\HttpKernel\HttpKernelBrowser;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpKernel\Profiler\Profile as HttpProfile;
 
 /**
  * Client simulates a browser and makes requests to a Kernel object.
  *
- * @author Fabien Potencier <fabien@symfony.com>
+ * @deprecated since Symfony 4.3, use KernelBrowser instead.
  */
-class Client extends BaseClient
+class Client extends HttpKernelBrowser
 {
     private $hasPerformedRequest = false;
     private $profiler = false;
@@ -169,7 +169,7 @@ class Client extends BaseClient
         foreach (get_declared_classes() as $class) {
             if (0 === strpos($class, 'ComposerAutoloaderInit')) {
                 $r = new \ReflectionClass($class);
-                $file = \dirname(\dirname($r->getFileName())).'/autoload.php';
+                $file = \dirname($r->getFileName(), 2).'/autoload.php';
                 if (file_exists($file)) {
                     $requires .= 'require_once '.var_export($file, true).";\n";
                 }

@@ -39,7 +39,7 @@ class YamlReferenceDumper
 
         foreach (explode('.', $path) as $step) {
             if (!$node instanceof ArrayNode) {
-                throw new \UnexpectedValueException(sprintf('Unable to find node at path "%s.%s"', $rootNode->getName(), $path));
+                throw new \UnexpectedValueException(sprintf('Unable to find node at path "%s.%s".', $rootNode->getName(), $path));
             }
 
             /** @var NodeInterface[] $children */
@@ -53,7 +53,7 @@ class YamlReferenceDumper
                 }
             }
 
-            throw new \UnexpectedValueException(sprintf('Unable to find node at path "%s.%s"', $rootNode->getName(), $path));
+            throw new \UnexpectedValueException(sprintf('Unable to find node at path "%s.%s".', $rootNode->getName(), $path));
         }
 
         return $this->dumpNode($node);
@@ -182,7 +182,7 @@ class YamlReferenceDumper
         $this->reference .= sprintf($format, $text)."\n";
     }
 
-    private function writeArray(array $array, $depth)
+    private function writeArray(array $array, int $depth)
     {
         $isIndexed = array_values($array) === $array;
 

@@ -19,11 +19,20 @@ use Symfony\Component\Process\Process;
  * Manages a local HTTP web server.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @deprecated since Symfony 4.4, to be removed in 5.0; the new Symfony local server has more features, you can use it instead.
  */
 class WebServer
 {
     const STARTED = 0;
     const STOPPED = 1;
+
+    private $pidFileDirectory;
+
+    public function __construct(string $pidFileDirectory = null)
+    {
+        $this->pidFileDirectory = $pidFileDirectory;
+    }
 
     public function run(WebServerConfig $config, $disableOutput = true, callable $callback = null)
     {
@@ -140,10 +149,7 @@ class WebServer
         return false;
     }
 
-    /**
-     * @return Process The process
-     */
-    private function createServerProcess(WebServerConfig $config)
+    private function createServerProcess(WebServerConfig $config): Process
     {
         $finder = new PhpExecutableFinder();
         if (false === $binary = $finder->find(false)) {
@@ -158,14 +164,18 @@ class WebServer
 
         if (\in_array('APP_ENV', explode(',', getenv('SYMFONY_DOTENV_VARS')))) {
             $process->setEnv(['APP_ENV' => false]);
-            $process->inheritEnvironmentVariables();
+
+            if (!method_exists(Process::class, 'fromShellCommandline')) {
+                // Symfony 3.4 does not inherit env vars by default:
+                $process->inheritEnvironmentVariables();
+            }
         }
 
         return $process;
     }
 
-    private function getDefaultPidFile()
+    private function getDefaultPidFile(): string
     {
-        return getcwd().'/.web-server-pid';
+        return ($this->pidFileDirectory ?? getcwd()).'/.web-server-pid';
     }
 }

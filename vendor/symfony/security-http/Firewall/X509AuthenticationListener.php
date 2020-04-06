@@ -12,11 +12,11 @@
 namespace Symfony\Component\Security\Http\Firewall;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * X509 authentication listener.
@@ -46,13 +46,13 @@ class X509AuthenticationListener extends AbstractPreAuthenticatedListener
             $user = $request->server->get($this->userKey);
         } elseif (
             $request->server->has($this->credentialKey)
-            && preg_match('#emailAddress=(.+\@.+\.[^,/]+)($|,|/)#', $request->server->get($this->credentialKey), $matches)
+            && preg_match('#emailAddress=([^,/@]++@[^,/]++)#', $request->server->get($this->credentialKey), $matches)
         ) {
             $user = $matches[1];
         }
 
         if (null === $user) {
-            throw new BadCredentialsException(sprintf('SSL credentials not found: %s, %s', $this->userKey, $this->credentialKey));
+            throw new BadCredentialsException(sprintf('SSL credentials not found: "%s", "%s".', $this->userKey, $this->credentialKey));
         }
 
         return [$user, $request->server->get($this->credentialKey, '')];

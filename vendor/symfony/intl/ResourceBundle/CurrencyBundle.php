@@ -21,7 +21,7 @@ use Symfony\Component\Intl\Exception\MissingResourceException;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal
+ * @internal to be removed in 5.0.
  */
 class CurrencyBundle extends CurrencyDataProvider implements CurrencyBundleInterface
 {
@@ -42,7 +42,7 @@ class CurrencyBundle extends CurrencyDataProvider implements CurrencyBundleInter
         try {
             return $this->getSymbol($currency, $displayLocale);
         } catch (MissingResourceException $e) {
-            return;
+            return null;
         }
     }
 
@@ -54,7 +54,7 @@ class CurrencyBundle extends CurrencyDataProvider implements CurrencyBundleInter
         try {
             return $this->getName($currency, $displayLocale);
         } catch (MissingResourceException $e) {
-            return;
+            return null;
         }
     }
 
@@ -78,7 +78,7 @@ class CurrencyBundle extends CurrencyDataProvider implements CurrencyBundleInter
         try {
             return parent::getFractionDigits($currency);
         } catch (MissingResourceException $e) {
-            return;
+            return null;
         }
     }
 
@@ -90,7 +90,7 @@ class CurrencyBundle extends CurrencyDataProvider implements CurrencyBundleInter
         try {
             return parent::getRoundingIncrement($currency);
         } catch (MissingResourceException $e) {
-            return;
+            return null;
         }
     }
 

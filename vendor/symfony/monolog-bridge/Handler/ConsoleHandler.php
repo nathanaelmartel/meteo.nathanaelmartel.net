@@ -11,6 +11,7 @@
 
 namespace Symfony\Bridge\Monolog\Handler;
 
+use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
@@ -50,6 +51,7 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
         OutputInterface::VERBOSITY_VERY_VERBOSE => Logger::INFO,
         OutputInterface::VERBOSITY_DEBUG => Logger::DEBUG,
     ];
+    private $consoleFormaterOptions;
 
     /**
      * @param OutputInterface|null $output            The console output to use (the handler remains disabled when passing null
@@ -58,7 +60,7 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
      * @param array                $verbosityLevelMap Array that maps the OutputInterface verbosity to a minimum logging
      *                                                level (leave empty to use the default mapping)
      */
-    public function __construct(OutputInterface $output = null, bool $bubble = true, array $verbosityLevelMap = [])
+    public function __construct(OutputInterface $output = null, bool $bubble = true, array $verbosityLevelMap = [], array $consoleFormaterOptions = [])
     {
         parent::__construct(Logger::DEBUG, $bubble);
         $this->output = $output;
@@ -66,10 +68,14 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
         if ($verbosityLevelMap) {
             $this->verbosityLevelMap = $verbosityLevelMap;
         }
+
+        $this->consoleFormaterOptions = $consoleFormaterOptions;
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function isHandling(array $record)
     {
@@ -78,6 +84,8 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
     public function handle(array $record)
     {
@@ -139,6 +147,8 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
 
     /**
      * {@inheritdoc}
+     *
+     * @return void
      */
     protected function write(array $record)
     {
@@ -148,6 +158,8 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
 
     /**
      * {@inheritdoc}
+     *
+     * @return FormatterInterface
      */
     protected function getDefaultFormatter()
     {
@@ -155,13 +167,13 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
             return new LineFormatter();
         }
         if (!$this->output) {
-            return new ConsoleFormatter();
+            return new ConsoleFormatter($this->consoleFormaterOptions);
         }
 
-        return new ConsoleFormatter([
+        return new ConsoleFormatter(array_replace([
             'colors' => $this->output->isDecorated(),
             'multiline' => OutputInterface::VERBOSITY_DEBUG <= $this->output->getVerbosity(),
-        ]);
+        ], $this->consoleFormaterOptions));
     }
 
     /**
@@ -169,7 +181,7 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
      *
      * @return bool Whether the handler is enabled and verbosity is not set to quiet
      */
-    private function updateLevel()
+    private function updateLevel(): bool
     {
         if (null === $this->output) {
             return false;

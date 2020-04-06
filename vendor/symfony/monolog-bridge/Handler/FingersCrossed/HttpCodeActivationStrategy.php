@@ -32,10 +32,10 @@ class HttpCodeActivationStrategy extends ErrorLevelActivationStrategy
     {
         foreach ($exclusions as $exclusion) {
             if (!\array_key_exists('code', $exclusion)) {
-                throw new \LogicException(sprintf('An exclusion must have a "code" key'));
+                throw new \LogicException(sprintf('An exclusion must have a "code" key.'));
             }
             if (!\array_key_exists('urls', $exclusion)) {
-                throw new \LogicException(sprintf('An exclusion must have a "urls" key'));
+                throw new \LogicException(sprintf('An exclusion must have a "urls" key.'));
             }
         }
 
@@ -45,6 +45,9 @@ class HttpCodeActivationStrategy extends ErrorLevelActivationStrategy
         $this->exclusions = $exclusions;
     }
 
+    /**
+     * @return bool
+     */
     public function isHandlerActivated(array $record)
     {
         $isActivated = parent::isHandlerActivated($record);

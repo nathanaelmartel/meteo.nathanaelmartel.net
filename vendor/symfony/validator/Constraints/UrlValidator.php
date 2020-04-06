@@ -24,9 +24,9 @@ class UrlValidator extends ConstraintValidator
 {
     const PATTERN = '~^
             (%s)://                                 # protocol
-            (([\.\pL\pN-]+:)?([\.\pL\pN-]+)@)?      # basic auth
+            (([\_\.\pL\pN-]+:)?([\_\.\pL\pN-]+)@)?  # basic auth
             (
-                ([\pL\pN\pS\-\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?) # a domain name
+                ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?) # a domain name
                     |                                                 # or
                 \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}                    # an IP address
                     |                                                 # or
@@ -35,9 +35,9 @@ class UrlValidator extends ConstraintValidator
                 \]  # an IPv6 address
             )
             (:[0-9]+)?                              # a port (optional)
-            (?:/ (?:[\pL\pN\-._\~!$&\'()*+,;=:@]|%%[0-9A-Fa-f]{2})* )*      # a path
-            (?:\? (?:[\pL\pN\-._\~!$&\'()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?   # a query (optional)
-            (?:\# (?:[\pL\pN\-._\~!$&\'()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?   # a fragment (optional)
+            (?:/ (?:[\pL\pN\-._\~!$&\'()*+,;=:@]|%%[0-9A-Fa-f]{2})* )*          # a path
+            (?:\? (?:[\pL\pN\-._\~!$&\'\[\]()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?   # a query (optional)
+            (?:\# (?:[\pL\pN\-._\~!$&\'()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?       # a fragment (optional)
         $~ixu';
 
     /**
@@ -46,7 +46,7 @@ class UrlValidator extends ConstraintValidator
     public function validate($value, Constraint $constraint)
     {
         if (!$constraint instanceof Url) {
-            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Url');
+            throw new UnexpectedTypeException($constraint, Url::class);
         }
 
         if (null === $value || '' === $value) {
@@ -60,6 +60,10 @@ class UrlValidator extends ConstraintValidator
         $value = (string) $value;
         if ('' === $value) {
             return;
+        }
+
+        if (null !== $constraint->normalizer) {
+            $value = ($constraint->normalizer)($value);
         }
 
         $pattern = $constraint->relativeProtocol ? str_replace('(%s):', '(?:(%s):)?', static::PATTERN) : static::PATTERN;
@@ -89,7 +93,7 @@ class UrlValidator extends ConstraintValidator
                 Url::CHECK_DNS_TYPE_SRV,
                 Url::CHECK_DNS_TYPE_TXT,
             ], true)) {
-                throw new InvalidOptionsException(sprintf('Invalid value for option "checkDNS" in constraint %s', \get_class($constraint)), ['checkDNS']);
+                throw new InvalidOptionsException(sprintf('Invalid value for option "checkDNS" in constraint "%s".', \get_class($constraint)), ['checkDNS']);
             }
 
             $host = parse_url($value, PHP_URL_HOST);

@@ -20,6 +20,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\HttpKernel\Debug\FileLinkFormatter;
 use Twig\Environment;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
@@ -39,8 +40,13 @@ class DebugCommand extends Command
     private $twigDefaultPath;
     private $rootDir;
     private $filesystemLoaders;
+    private $fileLinkFormatter;
 
-    public function __construct(Environment $twig, string $projectDir = null, array $bundlesMetadata = [], string $twigDefaultPath = null, string $rootDir = null)
+    /**
+     * @param FileLinkFormatter|null $fileLinkFormatter
+     * @param string|null            $rootDir
+     */
+    public function __construct(Environment $twig, string $projectDir = null, array $bundlesMetadata = [], string $twigDefaultPath = null, $fileLinkFormatter = null, $rootDir = null)
     {
         parent::__construct();
 
@@ -48,7 +54,16 @@ class DebugCommand extends Command
         $this->projectDir = $projectDir;
         $this->bundlesMetadata = $bundlesMetadata;
         $this->twigDefaultPath = $twigDefaultPath;
-        $this->rootDir = $rootDir;
+
+        if (\is_string($fileLinkFormatter) || $rootDir instanceof FileLinkFormatter) {
+            @trigger_error(sprintf('Passing a string as "$fileLinkFormatter" 5th argument or an instance of FileLinkFormatter as "$rootDir" 6th argument of the "%s()" method is deprecated since Symfony 4.4, swap the variables position.', __METHOD__), E_USER_DEPRECATED);
+
+            $this->rootDir = $fileLinkFormatter;
+            $this->fileLinkFormatter = $rootDir;
+        } else {
+            $this->fileLinkFormatter = $fileLinkFormatter;
+            $this->rootDir = $rootDir;
+        }
     }
 
     protected function configure()
@@ -91,31 +106,47 @@ EOF
         $filter = $input->getOption('filter');
 
         if (null !== $name && [] === $this->getFilesystemLoaders()) {
-            throw new InvalidArgumentException(sprintf('Argument "name" not supported, it requires the Twig loader "%s"', FilesystemLoader::class));
+            throw new InvalidArgumentException(sprintf('Argument "name" not supported, it requires the Twig loader "%s".', FilesystemLoader::class));
         }
 
         switch ($input->getOption('format')) {
             case 'text':
-                return $name ? $this->displayPathsText($io, $name) : $this->displayGeneralText($io, $filter);
+                $name ? $this->displayPathsText($io, $name) : $this->displayGeneralText($io, $filter);
+                break;
             case 'json':
-                return $name ? $this->displayPathsJson($io, $name) : $this->displayGeneralJson($io, $filter);
+                $name ? $this->displayPathsJson($io, $name) : $this->displayGeneralJson($io, $filter);
+                break;
             default:
                 throw new InvalidArgumentException(sprintf('The format "%s" is not supported.', $input->getOption('format')));
         }
+
+        return 0;
     }
 
     private function displayPathsText(SymfonyStyle $io, string $name)
     {
-        $files = $this->findTemplateFiles($name);
+        $file = new \ArrayIterator($this->findTemplateFiles($name));
         $paths = $this->getLoaderPaths($name);
 
         $io->section('Matched File');
-        if ($files) {
-            $io->success(array_shift($files));
+        if ($file->valid()) {
+            if ($fileLink = $this->getFileLink($file->key())) {
+                $io->block($file->current(), 'OK', sprintf('fg=black;bg=green;href=%s', $fileLink), ' ', true);
+            } else {
+                $io->success($file->current());
+            }
+            $file->next();
 
-            if ($files) {
+            if ($file->valid()) {
                 $io->section('Overridden Files');
-                $io->listing($files);
+                do {
+                    if ($fileLink = $this->getFileLink($file->key())) {
+                        $io->text(sprintf('* <href=%s>%s</>', $fileLink, $file->current()));
+                    } else {
+                        $io->text(sprintf('* %s', $file->current()));
+                    }
+                    $file->next();
+                } while ($file->valid());
             }
         } else {
             $alternatives = [];
@@ -221,7 +252,7 @@ EOF
         }
     }
 
-    private function displayGeneralJson(SymfonyStyle $io, $filter)
+    private function displayGeneralJson(SymfonyStyle $io, ?string $filter)
     {
         $decorated = $io->isDecorated();
         $types = ['functions', 'filters', 'tests', 'globals'];
@@ -275,22 +306,22 @@ EOF
         return $loaderPaths;
     }
 
-    private function getMetadata($type, $entity)
+    private function getMetadata(string $type, $entity)
     {
         if ('globals' === $type) {
             return $entity;
         }
         if ('tests' === $type) {
-            return;
+            return null;
         }
         if ('functions' === $type || 'filters' === $type) {
             $cb = $entity->getCallable();
             if (null === $cb) {
-                return;
+                return null;
             }
             if (\is_array($cb)) {
                 if (!method_exists($cb[0], $cb[1])) {
-                    return;
+                    return null;
                 }
                 $refl = new \ReflectionMethod($cb[0], $cb[1]);
             } elseif (\is_object($cb) && method_exists($cb, '__invoke')) {
@@ -300,7 +331,7 @@ EOF
             } elseif (\is_string($cb) && preg_match('{^(.+)::(.+)$}', $cb, $m) && method_exists($m[1], $m[2])) {
                 $refl = new \ReflectionMethod($m[1], $m[2]);
             } else {
-                throw new \UnexpectedValueException('Unsupported callback type');
+                throw new \UnexpectedValueException('Unsupported callback type.');
             }
 
             $args = $refl->getParameters();
@@ -329,9 +360,11 @@ EOF
 
             return $args;
         }
+
+        return null;
     }
 
-    private function getPrettyMetadata($type, $entity, $decorated)
+    private function getPrettyMetadata(string $type, $entity, bool $decorated): ?string
     {
         if ('tests' === $type) {
             return '';
@@ -363,6 +396,8 @@ EOF
         if ('filters' === $type) {
             return $meta ? '('.implode(', ', $meta).')' : '';
         }
+
+        return null;
     }
 
     private function findWrongBundleOverrides(): array
@@ -459,9 +494,9 @@ EOF
 
                 if (is_file($filename)) {
                     if (false !== $realpath = realpath($filename)) {
-                        $files[] = $this->getRelativePath($realpath);
+                        $files[$realpath] = $this->getRelativePath($realpath);
                     } else {
-                        $files[] = $this->getRelativePath($filename);
+                        $files[$filename] = $this->getRelativePath($filename);
                     }
                 }
             }
@@ -568,5 +603,14 @@ EOF
         }
 
         return $this->filesystemLoaders;
+    }
+
+    private function getFileLink(string $absolutePath): string
+    {
+        if (null === $this->fileLinkFormatter) {
+            return '';
+        }
+
+        return (string) $this->fileLinkFormatter->format($absolutePath, 1);
     }
 }

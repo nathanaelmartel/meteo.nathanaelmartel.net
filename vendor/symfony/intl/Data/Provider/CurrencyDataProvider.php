@@ -19,7 +19,7 @@ use Symfony\Component\Intl\Exception\MissingResourceException;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal
+ * @internal to be removed in 5.0.
  */
 class CurrencyDataProvider
 {
@@ -35,8 +35,7 @@ class CurrencyDataProvider
      * Creates a data provider that reads currency-related data from a
      * resource bundle.
      *
-     * @param string                     $path   The path to the resource bundle
-     * @param BundleEntryReaderInterface $reader The reader for reading the resource bundle
+     * @param string $path The path to the resource bundle
      */
     public function __construct(string $path, BundleEntryReaderInterface $reader)
     {

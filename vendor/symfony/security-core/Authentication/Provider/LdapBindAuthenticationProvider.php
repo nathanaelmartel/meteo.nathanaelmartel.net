@@ -34,14 +34,18 @@ class LdapBindAuthenticationProvider extends UserAuthenticationProvider
     private $ldap;
     private $dnString;
     private $queryString;
+    private $searchDn;
+    private $searchPassword;
 
-    public function __construct(UserProviderInterface $userProvider, UserCheckerInterface $userChecker, string $providerKey, LdapInterface $ldap, string $dnString = '{username}', bool $hideUserNotFoundExceptions = true)
+    public function __construct(UserProviderInterface $userProvider, UserCheckerInterface $userChecker, string $providerKey, LdapInterface $ldap, string $dnString = '{username}', bool $hideUserNotFoundExceptions = true, string $searchDn = '', string $searchPassword = '')
     {
         parent::__construct($userChecker, $providerKey, $hideUserNotFoundExceptions);
 
         $this->userProvider = $userProvider;
         $this->ldap = $ldap;
         $this->dnString = $dnString;
+        $this->searchDn = $searchDn;
+        $this->searchPassword = $searchPassword;
     }
 
     /**
@@ -60,7 +64,7 @@ class LdapBindAuthenticationProvider extends UserAuthenticationProvider
     protected function retrieveUser($username, UsernamePasswordToken $token)
     {
         if (AuthenticationProviderInterface::USERNAME_NONE_PROVIDED === $username) {
-            throw new UsernameNotFoundException('Username can not be null');
+            throw new UsernameNotFoundException('Username can not be null.');
         }
 
         return $this->userProvider->loadUserByUsername($username);
@@ -82,6 +86,11 @@ class LdapBindAuthenticationProvider extends UserAuthenticationProvider
             $username = $this->ldap->escape($username, '', LdapInterface::ESCAPE_DN);
 
             if ($this->queryString) {
+                if ('' !== $this->searchDn && '' !== $this->searchPassword) {
+                    $this->ldap->bind($this->searchDn, $this->searchPassword);
+                } else {
+                    @trigger_error('Using the "query_string" config without using a "search_dn" and a "search_password" is deprecated since Symfony 4.4 and will throw an exception in Symfony 5.0.', E_USER_DEPRECATED);
+                }
                 $query = str_replace('{username}', $username, $this->queryString);
                 $result = $this->ldap->query($this->dnString, $query)->execute();
                 if (1 !== $result->count()) {

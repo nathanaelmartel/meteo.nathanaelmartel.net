@@ -82,14 +82,28 @@ class DateType extends AbstractType
             // so we need to handle the cascade setting here
             $emptyData = $builder->getEmptyData() ?: [];
 
-            if (isset($emptyData['year'])) {
-                $yearOptions['empty_data'] = $emptyData['year'];
-            }
-            if (isset($emptyData['month'])) {
-                $monthOptions['empty_data'] = $emptyData['month'];
-            }
-            if (isset($emptyData['day'])) {
-                $dayOptions['empty_data'] = $emptyData['day'];
+            if ($emptyData instanceof \Closure) {
+                $lazyEmptyData = static function ($option) use ($emptyData) {
+                    return static function (FormInterface $form) use ($emptyData, $option) {
+                        $emptyData = $emptyData($form->getParent());
+
+                        return isset($emptyData[$option]) ? $emptyData[$option] : '';
+                    };
+                };
+
+                $yearOptions['empty_data'] = $lazyEmptyData('year');
+                $monthOptions['empty_data'] = $lazyEmptyData('month');
+                $dayOptions['empty_data'] = $lazyEmptyData('day');
+            } else {
+                if (isset($emptyData['year'])) {
+                    $yearOptions['empty_data'] = $emptyData['year'];
+                }
+                if (isset($emptyData['month'])) {
+                    $monthOptions['empty_data'] = $emptyData['month'];
+                }
+                if (isset($emptyData['day'])) {
+                    $dayOptions['empty_data'] = $emptyData['day'];
+                }
             }
 
             if (isset($options['invalid_message'])) {
@@ -108,13 +122,13 @@ class DateType extends AbstractType
                 \Locale::getDefault(),
                 $dateFormat,
                 $timeFormat,
-                // see https://bugs.php.net/bug.php?id=66323
+                // see https://bugs.php.net/66323
                 class_exists('IntlTimeZone', false) ? \IntlTimeZone::createDefault() : null,
                 $calendar,
                 $pattern
             );
 
-            // new \IntlDateFormatter may return null instead of false in case of failure, see https://bugs.php.net/bug.php?id=66323
+            // new \IntlDateFormatter may return null instead of false in case of failure, see https://bugs.php.net/66323
             if (!$formatter) {
                 throw new InvalidOptionsException(intl_get_error_message(), intl_get_error_code());
             }
@@ -154,7 +168,7 @@ class DateType extends AbstractType
             $builder->addModelTransformer(new DateTimeImmutableToDateTimeTransformer());
         } elseif ('string' === $options['input']) {
             $builder->addModelTransformer(new ReversedTransformer(
-                new DateTimeToStringTransformer($options['model_timezone'], $options['model_timezone'], 'Y-m-d')
+                new DateTimeToStringTransformer($options['model_timezone'], $options['model_timezone'], $options['input_format'])
             ));
         } elseif ('timestamp' === $options['input']) {
             $builder->addModelTransformer(new ReversedTransformer(
@@ -283,6 +297,7 @@ class DateType extends AbstractType
                 return $options['compound'] ? [] : '';
             },
             'choice_translation_domain' => false,
+            'input_format' => 'Y-m-d',
         ]);
 
         $resolver->setNormalizer('placeholder', $placeholderNormalizer);
@@ -305,6 +320,16 @@ class DateType extends AbstractType
         $resolver->setAllowedTypes('years', 'array');
         $resolver->setAllowedTypes('months', 'array');
         $resolver->setAllowedTypes('days', 'array');
+        $resolver->setAllowedTypes('input_format', 'string');
+
+        $resolver->setDeprecated('html5', function (Options $options, $html5) {
+            if ($html5 && 'single_text' === $options['widget'] && self::HTML5_FORMAT !== $options['format']) {
+                return sprintf('Using a custom format when the "html5" option of %s is enabled is deprecated since Symfony 4.3 and will lead to an exception in 5.0.', self::class);
+                //throw new LogicException(sprintf('Cannot use the "format" option of "%s" when the "html5" option is disabled.', self::class));
+            }
+
+            return '';
+        });
     }
 
     /**
@@ -315,7 +340,7 @@ class DateType extends AbstractType
         return 'date';
     }
 
-    private function formatTimestamps(\IntlDateFormatter $formatter, $regex, array $timestamps)
+    private function formatTimestamps(\IntlDateFormatter $formatter, string $regex, array $timestamps)
     {
         $pattern = $formatter->getPattern();
         $timezone = $formatter->getTimeZoneId();

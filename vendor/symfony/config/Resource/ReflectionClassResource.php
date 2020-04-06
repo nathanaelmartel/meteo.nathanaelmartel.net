@@ -18,8 +18,10 @@ use Symfony\Contracts\Service\ServiceSubscriberInterface;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>
+ *
+ * @final since Symfony 4.3
  */
-class ReflectionClassResource implements SelfCheckingResourceInterface, \Serializable
+class ReflectionClassResource implements SelfCheckingResourceInterface
 {
     private $files = [];
     private $className;
@@ -62,22 +64,14 @@ class ReflectionClassResource implements SelfCheckingResourceInterface, \Seriali
     /**
      * @internal
      */
-    public function serialize()
+    public function __sleep(): array
     {
         if (null === $this->hash) {
             $this->hash = $this->computeHash();
             $this->loadFiles($this->classReflector);
         }
 
-        return serialize([$this->files, $this->className, $this->hash]);
-    }
-
-    /**
-     * @internal
-     */
-    public function unserialize($serialized)
-    {
-        list($this->files, $this->className, $this->hash) = unserialize($serialized);
+        return ['files', 'className', 'hash'];
     }
 
     private function loadFiles(\ReflectionClass $class)
@@ -104,7 +98,7 @@ class ReflectionClassResource implements SelfCheckingResourceInterface, \Seriali
         } while ($class = $class->getParentClass());
     }
 
-    private function computeHash()
+    private function computeHash(): string
     {
         if (null === $this->classReflector) {
             try {
@@ -123,7 +117,7 @@ class ReflectionClassResource implements SelfCheckingResourceInterface, \Seriali
         return hash_final($hash);
     }
 
-    private function generateSignature(\ReflectionClass $class)
+    private function generateSignature(\ReflectionClass $class): iterable
     {
         yield $class->getDocComment();
         yield (int) $class->isFinal();
@@ -142,17 +136,61 @@ class ReflectionClassResource implements SelfCheckingResourceInterface, \Seriali
 
             foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED) as $p) {
                 yield $p->getDocComment().$p;
-                yield print_r(isset($defaults[$p->name]) ? $defaults[$p->name] : null, true);
+                yield print_r(isset($defaults[$p->name]) && !\is_object($defaults[$p->name]) ? $defaults[$p->name] : null, true);
             }
         }
 
         foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $m) {
-            yield preg_replace('/^  @@.*/m', '', $m);
-
             $defaults = [];
+            $parametersWithUndefinedConstants = [];
             foreach ($m->getParameters() as $p) {
-                $defaults[$p->name] = $p->isDefaultValueAvailable() ? $p->getDefaultValue() : null;
+                if (!$p->isDefaultValueAvailable()) {
+                    $defaults[$p->name] = null;
+
+                    continue;
+                }
+
+                if (!$p->isDefaultValueConstant() || \defined($p->getDefaultValueConstantName())) {
+                    $defaults[$p->name] = $p->getDefaultValue();
+
+                    continue;
+                }
+
+                $defaults[$p->name] = $p->getDefaultValueConstantName();
+                $parametersWithUndefinedConstants[$p->name] = true;
             }
+
+            if (!$parametersWithUndefinedConstants) {
+                yield preg_replace('/^  @@.*/m', '', $m);
+            } else {
+                $stack = [
+                    $m->getDocComment(),
+                    $m->getName(),
+                    $m->isAbstract(),
+                    $m->isFinal(),
+                    $m->isStatic(),
+                    $m->isPublic(),
+                    $m->isPrivate(),
+                    $m->isProtected(),
+                    $m->returnsReference(),
+                    $m->hasReturnType() ? $m->getReturnType()->getName() : '',
+                ];
+
+                foreach ($m->getParameters() as $p) {
+                    if (!isset($parametersWithUndefinedConstants[$p->name])) {
+                        $stack[] = (string) $p;
+                    } else {
+                        $stack[] = $p->isOptional();
+                        $stack[] = $p->hasType() ? $p->getType()->getName() : '';
+                        $stack[] = $p->isPassedByReference();
+                        $stack[] = $p->isVariadic();
+                        $stack[] = $p->getName();
+                    }
+                }
+
+                yield implode(',', $stack);
+            }
+
             yield print_r($defaults, true);
         }
 
