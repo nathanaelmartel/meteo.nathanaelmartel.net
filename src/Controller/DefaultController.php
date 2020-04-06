@@ -2,10 +2,9 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Routing\Annotation\Route;
 
-class DefaultController extends Controller
+class DefaultController extends BaseController
 {
     /**
      * @Route("/", name="default")
@@ -14,7 +13,7 @@ class DefaultController extends Controller
     {
         $em = $this->getDoctrine()->getManager();
         $day_end = new \DateTime();
-        $day_start = new \DateTime('-1 day');
+        $day_start = new \DateTime('-12 hours');
 
         $stats = $em->getRepository('App:Measure')->getStat($day_end, $day_start, 13);
 
@@ -25,6 +24,7 @@ class DefaultController extends Controller
                 'pagination' => [],
                 'current_year' => '',
                 'route' => 'admin_order_stat_day_site',
+                'last_temperature_date' => new \DateTime($this->getSetting('last_temperature')),
                 'graph' => '',
             ]);
     }

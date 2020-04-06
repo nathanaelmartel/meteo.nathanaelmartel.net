@@ -25,8 +25,8 @@ the additional benefit of being able to re-use your validation in
 any other part of your domain.
 
 Say we have an ``Order`` with several ``OrderLine`` instances. We
-never want to allow any customer to order for a larger sum than he
-is allowed to:
+never want to allow any customer to order for a larger sum than they
+are allowed to:
 
 .. code-block:: php
 
@@ -134,4 +134,4 @@ instances. This was already discussed in the previous blog post on
 the Versionable extension, which requires another type of event
 called "onFlush".
 
-Further readings: :doc:`Lifecycle Events <../reference/events>`
+Further readings: :ref:`reference-events-lifecycle-events`

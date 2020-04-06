@@ -22,10 +22,12 @@ use function substr;
  */
 class MigrateCommand extends AbstractCommand
 {
+    /** @var string */
+    protected static $defaultName = 'migrations:migrate';
+
     protected function configure() : void
     {
         $this
-            ->setName('migrations:migrate')
             ->setAliases(['migrate'])
             ->setDescription(
                 'Execute a migration to a specified version or the latest available version.'
@@ -59,7 +61,7 @@ class MigrateCommand extends AbstractCommand
                 'allow-no-migration',
                 null,
                 InputOption::VALUE_NONE,
-                'Don\'t throw an exception if no migration is available (CI).'
+                'Do not throw an exception if no migration is available.'
             )
             ->addOption(
                 'all-or-nothing',

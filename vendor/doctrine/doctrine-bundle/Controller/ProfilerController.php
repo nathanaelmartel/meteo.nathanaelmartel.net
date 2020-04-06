@@ -12,9 +12,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Symfony\Component\VarDumper\Cloner\Data;
 
-/**
- * ProfilerController.
- */
 class ProfilerController implements ContainerAwareInterface
 {
     /** @var ContainerInterface */
@@ -89,6 +86,7 @@ class ProfilerController implements ContainerAwareInterface
 
         $stmt = $connection->executeQuery($sql, $params, $query['types']);
         $stmt->nextRowset();
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

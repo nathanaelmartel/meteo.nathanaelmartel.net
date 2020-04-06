@@ -15,11 +15,11 @@ Installation
 
 Run this command in your terminal:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ composer require doctrine/doctrine-migrations-bundle "^2.0"
 
-If you don't use Symfony Flex, you must enable the bundle manually in the application:
+If you don't use `Symfony Flex`_, you must enable the bundle manually in the application:
 
 .. code-block:: php
 
@@ -42,8 +42,6 @@ application:
     # config/packages/doctrine_migrations.yaml
     doctrine_migrations:
         dir_name: '%kernel.project_dir%/src/Migrations'
-        # namespace is arbitrary but should be different from App\Migrations
-        # as migrations classes should NOT be autoloaded
         namespace: DoctrineMigrations
         table_name: 'migration_versions'
         column_name: 'version'
@@ -52,7 +50,7 @@ application:
         name: 'Application Migrations'
         # available in version >= 1.2. Possible values: "BY_YEAR", "BY_YEAR_AND_MONTH", false
         organize_migrations: false
-        # available in version >= 1.2. Path to your custom migrations template
+        # available in version >= 1.3. Path to your custom migrations template
         custom_template: ~
         all_or_nothing: false
 
@@ -61,7 +59,7 @@ Usage
 
 All of the migrations functionality is contained in a few console commands:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     doctrine
      doctrine:migrations:diff                [diff] Generate a migration by comparing your current database to your mapping information.
@@ -78,7 +76,7 @@ All of the migrations functionality is contained in a few console commands:
 Start by getting the status of migrations in your application by running
 the ``status`` command:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:status
 
@@ -91,7 +89,7 @@ the ``status`` command:
         >> Configuration Source:                               manually configured
         >> Version Table Name:                                 migration_versions
         >> Version Column Name:                                version
-        >> Migrations Namespace:                               App\Migrations
+        >> Migrations Namespace:                               DoctrineMigrations
         >> Migrations Directory:                               /path/to/project/app/Migrations
         >> Previous Version:                                   Already at first version
         >> Current Version:                                    0
@@ -106,7 +104,7 @@ Now, you can start working with migrations by generating a new blank migration
 class. Later, you'll learn how Doctrine can generate migrations automatically
 for you.
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:generate
     Generated new migration class to "/path/to/project/app/Migrations/Version20180605025653.php"
@@ -122,7 +120,7 @@ like the following:
 
     declare(strict_types=1);
 
-    namespace App\Migrations;
+    namespace DoctrineMigrations;
 
     use Doctrine\DBAL\Schema\Schema;
     use Doctrine\Migrations\AbstractMigration;
@@ -153,7 +151,7 @@ like the following:
 If you run the ``status`` command it will now show that you have one new
 migration to execute:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:status --show-versions
 
@@ -184,13 +182,18 @@ migration to execute:
 Now you can add some migration code to the ``up()`` and ``down()`` methods and
 finally migrate when you're ready:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:migrate 20180605025653
 
 For more information on how to write the migrations themselves (i.e. how to
 fill in the ``up()`` and ``down()`` methods), see the official Doctrine Migrations
 `documentation`_.
+
+.. tip::
+
+    If you need to use another database connection to execute migrations you may use option ``--db="doctrine-connection-name"`` 
+    where ``doctrine-connection-name`` is valid Doctrine connection defined in doctrine.yaml
 
 Running Migrations during Deployment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -215,7 +218,7 @@ Skipping Migrations
 
 You can skip single migrations by explicitly adding them to the ``migration_versions`` table:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:version YYYYMMDDHHMMSS --add
 
@@ -297,7 +300,7 @@ With this information, Doctrine is now ready to help you persist your new
 doesn't exist yet! Generate a new migration for this table automatically by
 running the following command:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:diff
 
@@ -306,7 +309,7 @@ the schema differences. If you open this file, you'll find that it has the
 SQL code needed to create the ``user`` table. Next, run the migration
 to add the table to your database:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:migrate
 
@@ -323,7 +326,7 @@ for your project.
 If you don't want to use this workflow and instead create your schema via
 ``doctrine:schema:create``, you can tell Doctrine to skip all existing migrations:
 
-.. code-block:: bash
+.. code-block:: terminal
 
     $ php bin/console doctrine:migrations:version --add --all
 
@@ -334,7 +337,7 @@ Manual Tables
 
 It is a common use case, that in addition to your generated database structure
 based on your doctrine entities you might need custom tables. By default such
-tables will be removed by the doctrine:migrations:diff command.
+tables will be removed by the ``doctrine:migrations:diff`` command.
 
 If you follow a specific scheme you can configure doctrine/dbal to ignore those
 tables. Let's say all custom tables will be prefixed by ``t_``. In this case you
@@ -371,3 +374,4 @@ will need to be placed per-connection.
 .. _documentation: https://www.doctrine-project.org/projects/doctrine-migrations/en/current/index.html
 .. _DoctrineMigrationsBundle: https://github.com/doctrine/DoctrineMigrationsBundle
 .. _`Doctrine Database Migrations`: https://github.com/doctrine/migrations
+.. _`Symfony Flex`: https://symfony.com/doc/current/setup/flex.html

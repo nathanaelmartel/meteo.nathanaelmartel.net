@@ -2,12 +2,11 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
 use App\Entity\Measure;
 
-class ApiController extends Controller
+class ApiController extends BaseController
 {
     /**
      * @Route("/api", name="api")
@@ -20,21 +19,12 @@ class ApiController extends Controller
     }
 
     /**
-     * @Route("/api/temperature/{value}", name="api_temperature")
+     * @Route("/api/{measure}/{value}", name="api_measure")
      */
-    public function temperature($value)
+    public function temperature(string $measure, string $value)
     {
-        $measure = $this->addMeasure('temperature', $value);
-
-        return new Response('ok', 200);
-    }
-
-    /**
-     * @Route("/api/humidity/{value}", name="api_humidity")
-     */
-    public function humidity($value)
-    {
-        $measure = $this->addMeasure('humidity', $value);
+        $Measure = $this->addMeasure($measure, $value);
+        $this->setSetting(sprintf('last_%s', $measure), date('Y-m-d H:i:s'));
 
         return new Response('ok', 200);
     }

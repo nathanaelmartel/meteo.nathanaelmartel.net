@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Doctrine\Migrations\Tools\Console\Command;
 
 use Doctrine\Migrations\Generator\DiffGenerator;
+use Doctrine\Migrations\Generator\Exception\NoChangesDetected;
 use Doctrine\Migrations\Provider\OrmSchemaProvider;
 use Doctrine\Migrations\Provider\SchemaProviderInterface;
 use Doctrine\Migrations\Tools\Console\Exception\InvalidOptionUsage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use const FILTER_VALIDATE_BOOLEAN;
 use function class_exists;
+use function filter_var;
 use function sprintf;
 
 /**
@@ -20,6 +23,9 @@ use function sprintf;
  */
 class DiffCommand extends AbstractCommand
 {
+    /** @var string */
+    protected static $defaultName = 'migrations:diff';
+
     /** @var SchemaProviderInterface|null */
     protected $schemaProvider;
 
@@ -35,7 +41,6 @@ class DiffCommand extends AbstractCommand
         parent::configure();
 
         $this
-            ->setName('migrations:diff')
             ->setAliases(['diff'])
             ->setDescription('Generate a migration by comparing your current database to your mapping information.')
             ->setHelp(<<<EOT
@@ -72,6 +77,19 @@ EOT
                 InputOption::VALUE_OPTIONAL,
                 'Max line length of unformatted lines.',
                 120
+            )
+            ->addOption(
+                'check-database-platform',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Check Database Platform to the generated code.',
+                true
+            )
+            ->addOption(
+                'allow-empty-diff',
+                null,
+                InputOption::VALUE_NONE,
+                'Do not throw an exception when no changes are detected.'
             );
     }
 
@@ -85,6 +103,8 @@ EOT
         $filterExpression = $input->getOption('filter-expression') ?? null;
         $formatted        = (bool) $input->getOption('formatted');
         $lineLength       = (int) $input->getOption('line-length');
+        $allowEmptyDiff   = (bool) $input->getOption('allow-empty-diff');
+        $checkDbPlatform  = filter_var($input->getOption('check-database-platform'), FILTER_VALIDATE_BOOLEAN);
 
         if ($formatted) {
             if (! class_exists('SqlFormatter')) {
@@ -96,12 +116,22 @@ EOT
 
         $versionNumber = $this->configuration->generateVersionNumber();
 
-        $path = $this->createMigrationDiffGenerator()->generate(
-            $versionNumber,
-            $filterExpression,
-            $formatted,
-            $lineLength
-        );
+        try {
+            $path = $this->createMigrationDiffGenerator()->generate(
+                $versionNumber,
+                $filterExpression,
+                $formatted,
+                $lineLength,
+                $checkDbPlatform
+            );
+        } catch (NoChangesDetected $exception) {
+            if ($allowEmptyDiff) {
+                $output->writeln($exception->getMessage());
+
+                return 0;
+            }
+            throw $exception;
+        }
 
         $editorCommand = $input->getOption('editor-cmd');
 

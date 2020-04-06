@@ -70,15 +70,20 @@ class ParallelDownloader extends RemoteFilesystem
 
         if (!$this->quiet) {
             if (!$this->downloader && method_exists(parent::class, 'getRemoteContents')) {
-                $this->io->writeError('<warning>Enable the "cURL" PHP extension for faster downloads</warning>');
+                $this->io->writeError('<warning>Enable the "cURL" PHP extension for faster downloads</>');
             }
-            $note = '\\' === \DIRECTORY_SEPARATOR ? '' : (false !== stripos(PHP_OS, 'darwin') ? '🎵' : '🎶');
-            $note .= $this->downloader ? ('\\' !== \DIRECTORY_SEPARATOR ? ' 💨' : '') : '';
+
+            $note = '';
+            if ($this->io->isDecorated()) {
+                $note = '\\' === \DIRECTORY_SEPARATOR ? '' : (false !== stripos(PHP_OS, 'darwin') ? '🎵' : '🎶');
+                $note .= $this->downloader ? ('\\' !== \DIRECTORY_SEPARATOR ? ' 💨' : '') : '';
+            }
+
             $this->io->writeError('');
-            $this->io->writeError(sprintf('<info>Prefetching %d packages</info> %s', $this->downloadCount, $note));
+            $this->io->writeError(sprintf('<info>Prefetching %d packages</> %s', $this->downloadCount, $note));
             $this->io->writeError('  - Downloading', false);
             if ($this->progress) {
-                $this->io->writeError(' (<comment>0%</comment>)', false);
+                $this->io->writeError(' (<comment>0%</>)', false);
             }
         }
         try {
@@ -86,9 +91,9 @@ class ParallelDownloader extends RemoteFilesystem
             if ($this->quiet) {
                 // no-op
             } elseif ($this->progress) {
-                $this->io->overwriteError(' (<comment>100%</comment>)');
+                $this->io->overwriteError(' (<comment>100%</>)');
             } else {
-                $this->io->writeError(' (<comment>100%</comment>)');
+                $this->io->writeError(' (<comment>100%</>)');
             }
         } finally {
             if (!$this->quiet) {
@@ -192,7 +197,7 @@ class ParallelDownloader extends RemoteFilesystem
 
             if (5 <= $progress - $state->lastProgress || 1 <= $progressTime - $state->lastUpdate) {
                 $state->lastProgress = $progress;
-                $this->io->overwriteError(sprintf(' (<comment>%d%%</comment>)', $progress), false);
+                $this->io->overwriteError(sprintf(' (<comment>%d%%</>)', $progress), false);
                 $state->lastUpdate = microtime(true);
             }
         }
@@ -214,6 +219,8 @@ class ParallelDownloader extends RemoteFilesystem
     protected function getRemoteContents($originUrl, $fileUrl, $context, array &$responseHeaders = null)
     {
         if (isset(self::$cache[$fileUrl])) {
+            self::$cacheNext = false;
+
             $result = self::$cache[$fileUrl];
 
             if (3 < \func_num_args()) {
@@ -237,7 +244,7 @@ class ParallelDownloader extends RemoteFilesystem
             return $result;
         }
 
-        if (!$this->downloader) {
+        if (!$this->downloader || !preg_match('/^https?:/', $fileUrl)) {
             return parent::getRemoteContents($originUrl, $fileUrl, $context, $responseHeaders);
         }
 

@@ -34,6 +34,7 @@ abstract class AbstractFileConfiguration extends Configuration
         'migrations',
         'custom_template',
         'all_or_nothing',
+        'check_database_platform',
     ];
 
     private const CONFIGURATION_METHOD_MAP = [
@@ -48,6 +49,7 @@ abstract class AbstractFileConfiguration extends Configuration
         'migrations'                => 'loadMigrations',
         'custom_template'           => 'setCustomTemplate',
         'all_or_nothing'            => 'setAllOrNothing',
+        'check_database_platform'   => 'setCheckDatabasePlatform',
     ];
 
     /** @var string */
@@ -139,9 +141,9 @@ abstract class AbstractFileConfiguration extends Configuration
 
     private function setMigrationOrganization(string $migrationOrganization) : void
     {
-        if (strcasecmp($migrationOrganization, static::VERSIONS_ORGANIZATION_BY_YEAR) === 0) {
+        if (strcasecmp($migrationOrganization, self::VERSIONS_ORGANIZATION_BY_YEAR) === 0) {
             $this->setMigrationsAreOrganizedByYear();
-        } elseif (strcasecmp($migrationOrganization, static::VERSIONS_ORGANIZATION_BY_YEAR_AND_MONTH) === 0) {
+        } elseif (strcasecmp($migrationOrganization, self::VERSIONS_ORGANIZATION_BY_YEAR_AND_MONTH) === 0) {
             $this->setMigrationsAreOrganizedByYearAndMonth();
         } else {
             throw UnknownConfigurationValue::new('organize_migrations', $migrationOrganization);

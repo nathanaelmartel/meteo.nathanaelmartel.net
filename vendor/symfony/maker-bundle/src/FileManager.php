@@ -29,14 +29,16 @@ class FileManager
     private $rootDirectory;
     /** @var SymfonyStyle */
     private $io;
+    private $twigDefaultPath;
 
-    public function __construct(Filesystem $fs, AutoloaderUtil $autoloaderUtil, string $rootDirectory)
+    public function __construct(Filesystem $fs, AutoloaderUtil $autoloaderUtil, string $rootDirectory, string $twigDefaultPath = null)
     {
         // move FileManagerTest stuff
         // update EntityRegeneratorTest to mock the autoloader
         $this->fs = $fs;
         $this->autoloaderUtil = $autoloaderUtil;
         $this->rootDirectory = rtrim($this->realPath($this->normalizeSlashes($rootDirectory)), '/');
+        $this->twigDefaultPath = $twigDefaultPath ? rtrim($this->relativizePath($twigDefaultPath), '/') : null;
     }
 
     public function setIO(SymfonyStyle $io)
@@ -59,16 +61,16 @@ class FileManager
         $newFile = !$this->fileExists($filename);
         $existingContent = $newFile ? '' : file_get_contents($absolutePath);
 
-        $comment = $newFile ? 'created' : 'updated';
+        $comment = $newFile ? '<fg=blue>created</>' : '<fg=yellow>updated</>';
         if ($existingContent === $content) {
-            $comment = 'no change';
+            $comment = '<fg=green>no change</>';
         }
 
         $this->fs->dumpFile($absolutePath, $content);
 
         if ($this->io) {
             $this->io->comment(sprintf(
-                '<fg=green>%s</>: %s',
+                '%s: %s',
                 $comment,
                 $this->relativizePath($filename)
             ));
@@ -84,8 +86,6 @@ class FileManager
      * Attempts to make the path relative to the root directory.
      *
      * @param string $absolutePath
-     *
-     * @return string
      *
      * @throws \Exception
      */
@@ -118,7 +118,7 @@ class FileManager
         return file_get_contents($this->absolutizePath($path));
     }
 
-    public function createFinder(string $in)
+    public function createFinder(string $in): Finder
     {
         $finder = new Finder();
         $finder->in($this->absolutizePath($in));
@@ -146,8 +146,6 @@ class FileManager
     }
 
     /**
-     * @param string $className
-     *
      * @return string|null
      *
      * @throws \Exception
@@ -174,12 +172,19 @@ class FileManager
         return $this->rootDirectory;
     }
 
+    public function getPathForTemplate(string $filename): string
+    {
+        if (null === $this->twigDefaultPath) {
+            throw new \RuntimeException('Cannot get path for template: is Twig installed?');
+        }
+
+        return $this->twigDefaultPath.'/'.$filename;
+    }
+
     /**
      * Resolve '../' in paths (like real_path), but for non-existent files.
      *
      * @param string $absolutePath
-     *
-     * @return string
      */
     private function realPath($absolutePath): string
     {

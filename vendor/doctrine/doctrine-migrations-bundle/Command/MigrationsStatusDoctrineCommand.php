@@ -10,18 +10,22 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use function assert;
 
 /**
  * Command to view the status of a set of migrations.
  */
 class MigrationsStatusDoctrineCommand extends StatusCommand
 {
+    /** @var string */
+    protected static $defaultName = 'doctrine:migrations:status';
+
     protected function configure() : void
     {
         parent::configure();
 
         $this
-            ->setName('doctrine:migrations:status')
             ->addOption('db', null, InputOption::VALUE_REQUIRED, 'The database connection to use for this command.')
             ->addOption('em', null, InputOption::VALUE_REQUIRED, 'The entity manager to use for this command.')
             ->addOption('shard', null, InputOption::VALUE_REQUIRED, 'The shard connection to use for this command.');
@@ -35,7 +39,9 @@ class MigrationsStatusDoctrineCommand extends StatusCommand
         Helper\DoctrineCommandHelper::setApplicationHelper($application, $input);
 
         $configuration = $this->getMigrationConfiguration($input, $output);
-        DoctrineCommand::configureMigrations($application->getKernel()->getContainer(), $configuration);
+        $container     = $application->getKernel()->getContainer();
+        assert($container instanceof ContainerInterface);
+        DoctrineCommand::configureMigrations($container, $configuration);
 
         parent::initialize($input, $output);
     }

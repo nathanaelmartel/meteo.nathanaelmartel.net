@@ -27,6 +27,7 @@ class Downloader
 {
     private static $DEFAULT_ENDPOINT = 'https://flex.symfony.com';
     private static $MAX_LENGTH = 1000;
+    private static $versions;
 
     private $io;
     private $sess;
@@ -36,6 +37,7 @@ class Downloader
     private $endpoint;
     private $caFile;
     private $flexId;
+    private $enabled = true;
 
     public function __construct(Composer $composer, IoInterface $io, ParallelDownloader $rfs)
     {
@@ -43,15 +45,7 @@ class Downloader
             $this->caFile = getenv('SYMFONY_CAFILE');
         }
 
-        foreach (array_merge($composer->getPackage()->getRequires() ?? [], $composer->getPackage()->getDevRequires() ?? []) as $link) {
-            // recipes apply only when symfony/flex is found in "require" or "require-dev" in the root package
-            if ('symfony/flex' !== $link->getTarget()) {
-                continue;
-            }
-            $this->endpoint = rtrim(getenv('SYMFONY_ENDPOINT') ?: ($composer->getPackage()->getExtra()['symfony']['endpoint'] ?? self::$DEFAULT_ENDPOINT), '/');
-            break;
-        }
-
+        $this->endpoint = rtrim(getenv('SYMFONY_ENDPOINT') ?: ($composer->getPackage()->getExtra()['symfony']['endpoint'] ?? self::$DEFAULT_ENDPOINT), '/');
         $this->io = $io;
         $config = $composer->getConfig();
         $this->rfs = $rfs;
@@ -69,9 +63,19 @@ class Downloader
         $this->flexId = $id;
     }
 
-    public function getEndpoint()
+    public function isEnabled()
     {
-        return $this->endpoint;
+        return $this->enabled;
+    }
+
+    public function disable()
+    {
+        $this->enabled = false;
+    }
+
+    public function getVersions()
+    {
+        return self::$versions ?? self::$versions = $this->get('/versions.json')->getBody();
     }
 
     /**
@@ -106,8 +110,8 @@ class Downloader
                 }
             }
 
-            // FIXME: getNames() can return n names
-            $name = str_replace('/', ',', $package->getNames()[0]);
+            // FIXME: Multi name with getNames()
+            $name = str_replace('/', ',', $package->getName());
             $path = sprintf('%s,%s%s', $name, $o, $version);
             if ($date = $package->getReleaseDate()) {
                 $path .= ','.$date->format('U');
@@ -125,8 +129,8 @@ class Downloader
             $paths[] = ['/p/'.$chunk];
         }
 
-        if (null !== $this->endpoint && self::$DEFAULT_ENDPOINT !== $this->endpoint) {
-            $this->io->writeError('<warning>Using "'.$this->endpoint.'" as the Symfony endpoint</warning>');
+        if ($this->enabled && self::$DEFAULT_ENDPOINT !== $this->endpoint) {
+            $this->io->writeError('<warning>Using "'.$this->endpoint.'" as the Symfony endpoint</>');
         }
 
         $bodies = [];
@@ -157,7 +161,7 @@ class Downloader
      */
     public function get(string $path, array $headers = [], $cache = true): Response
     {
-        if (null === $this->endpoint) {
+        if (!$this->enabled && '/versions.json' !== $path) {
             return new Response([]);
         }
         $headers[] = 'Package-Session: '.$this->sess;
@@ -243,10 +247,10 @@ class Downloader
     {
         $data = JsonFile::parseJson($json, $url);
         if (!empty($data['warning'])) {
-            $this->io->writeError('<warning>Warning from '.$url.': '.$data['warning'].'</warning>');
+            $this->io->writeError('<warning>Warning from '.$url.': '.$data['warning'].'</>');
         }
         if (!empty($data['info'])) {
-            $this->io->writeError('<info>Info from '.$url.': '.$data['info'].'</info>');
+            $this->io->writeError('<info>Info from '.$url.': '.$data['info'].'</>');
         }
 
         $response = new Response($data, $lastHeaders);
@@ -260,8 +264,8 @@ class Downloader
     private function switchToDegradedMode(\Exception $e, string $url)
     {
         if (!$this->degradedMode) {
-            $this->io->writeError('<warning>'.$e->getMessage().'</warning>');
-            $this->io->writeError('<warning>'.$url.' could not be fully loaded, package information was loaded from the local cache and may be out of date</warning>');
+            $this->io->writeError('<warning>'.$e->getMessage().'</>');
+            $this->io->writeError('<warning>'.$url.' could not be fully loaded, package information was loaded from the local cache and may be out of date</>');
         }
         $this->degradedMode = true;
     }

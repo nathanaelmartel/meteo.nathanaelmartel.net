@@ -96,7 +96,7 @@ final class DependencyBuilder
         $message = sprintf(
             "Missing package%s: %s, run:\n",
             $packagesCount > 1 ? 's' : '',
-            $message ? $message : sprintf('to use the %s command', $commandName)
+            $message ?: sprintf('to use the %s command', $commandName)
         );
 
         if (!empty($packages)) {
@@ -136,7 +136,7 @@ final class DependencyBuilder
         $missingPackages = [];
         $missingOptionalPackages = [];
         foreach ($dependencies as $package) {
-            if (class_exists($package['class']) || interface_exists($package['class'])) {
+            if (class_exists($package['class']) || interface_exists($package['class']) || trait_exists($package['class'])) {
                 continue;
             }
             if (true === $package['required']) {

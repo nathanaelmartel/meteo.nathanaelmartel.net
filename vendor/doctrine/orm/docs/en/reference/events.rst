@@ -243,6 +243,11 @@ a relevant lifecycle event. More than one callback can be defined for each
 lifecycle event. Lifecycle Callbacks are best used for simple operations
 specific to a particular entity class's lifecycle.
 
+
+.. note::
+
+    Note that Licecycle Callbacks are not supported for Embeddables.
+
 .. code-block:: php
 
     <?php
@@ -548,8 +553,9 @@ preFlush
 ~~~~~~~~
 
 ``preFlush`` is called at ``EntityManager#flush()`` before
-anything else. ``EntityManager#flush()`` can be called safely
-inside its listeners.
+anything else. ``EntityManager#flush()`` should not be called inside
+its listeners, since `preFlush` event is dispatched in it, which would
+result in infinite loop.
 
 .. code-block:: php
 

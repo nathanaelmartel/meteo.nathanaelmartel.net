@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
 use Symfony\Component\DependencyInjection\ServiceSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Messenger\Handler\MessageSubscriberInterface;
 
 class ReflectionClassResourceTest extends TestCase
 {
@@ -133,6 +134,14 @@ EOPHP;
         yield [1, 13, 'protected function prot($a = [123]) {}'];
         yield [0, 14, '/** priv docblock */'];
         yield [0, 15, ''];
+
+        if (\PHP_VERSION_ID >= 70400) {
+            // PHP7.4 typed properties without default value are
+            // undefined, make sure this doesn't throw an error
+            yield [1, 5, 'public array $pub;'];
+            yield [0, 7, 'protected int $prot;'];
+            yield [0, 9, 'private string $priv;'];
+        }
     }
 
     public function testEventSubscriber()
@@ -144,6 +153,24 @@ EOPHP;
         $this->assertFalse($res->isFresh(0));
 
         $res = new ReflectionClassResource(new \ReflectionClass(TestEventSubscriber::class));
+        $this->assertTrue($res->isFresh(0));
+    }
+
+    public function testMessageSubscriber()
+    {
+        $res = new ReflectionClassResource(new \ReflectionClass(TestMessageSubscriber::class));
+        $this->assertTrue($res->isFresh(0));
+
+        TestMessageSubscriberConfigHolder::$handledMessages = ['SomeMessageClass' => []];
+        $this->assertFalse($res->isFresh(0));
+
+        $res = new ReflectionClassResource(new \ReflectionClass(TestMessageSubscriber::class));
+        $this->assertTrue($res->isFresh(0));
+
+        TestMessageSubscriberConfigHolder::$handledMessages = ['OtherMessageClass' => []];
+        $this->assertFalse($res->isFresh(0));
+
+        $res = new ReflectionClassResource(new \ReflectionClass(TestMessageSubscriber::class));
         $this->assertTrue($res->isFresh(0));
     }
 
@@ -172,6 +199,20 @@ class TestEventSubscriber implements EventSubscriberInterface
     {
         return self::$subscribedEvents;
     }
+}
+
+class TestMessageSubscriber implements MessageSubscriberInterface
+{
+    public static function getHandledMessages(): iterable
+    {
+        foreach (TestMessageSubscriberConfigHolder::$handledMessages as $key => $subscribedMessage) {
+            yield $key => $subscribedMessage;
+        }
+    }
+}
+class TestMessageSubscriberConfigHolder
+{
+    public static $handledMessages = [];
 }
 
 class TestServiceSubscriber implements ServiceSubscriberInterface

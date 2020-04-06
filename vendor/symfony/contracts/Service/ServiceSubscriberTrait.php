@@ -22,7 +22,7 @@ use Psr\Container\ContainerInterface;
 trait ServiceSubscriberTrait
 {
     /** @var ContainerInterface */
-    private $container;
+    protected $container;
 
     public static function getSubscribedServices(): array
     {
@@ -32,7 +32,7 @@ trait ServiceSubscriberTrait
             return $services;
         }
 
-        $services = \is_callable(array('parent', __FUNCTION__)) ? parent::getSubscribedServices() : array();
+        $services = \is_callable(['parent', __FUNCTION__]) ? parent::getSubscribedServices() : [];
 
         foreach ((new \ReflectionClass(self::class))->getMethods() as $method) {
             if ($method->isStatic() || $method->isAbstract() || $method->isGenerator() || $method->isInternal() || $method->getNumberOfRequiredParameters()) {
@@ -54,8 +54,10 @@ trait ServiceSubscriberTrait
     {
         $this->container = $container;
 
-        if (\is_callable(array('parent', __FUNCTION__))) {
+        if (\is_callable(['parent', __FUNCTION__])) {
             return parent::setContainer($container);
         }
+
+        return null;
     }
 }

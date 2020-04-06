@@ -32,18 +32,20 @@ Now, in the root of your project place a file named ``migrations.php``, ``migrat
             'executed_at_column_name' => 'executed_at',
             'migrations_directory' => '/data/doctrine/migrations-docs-example/lib/MyProject/Migrations',
             'all_or_nothing' => true,
+            'check_database_platform' => true,
         ];
 
     .. code-block:: yaml
 
         name: "My Project Migrations"
-        migrations_namespace: "MyProject\Migrations"
+        migrations_namespace: "MyProject\\Migrations"
         table_name: "doctrine_migration_versions"
         column_name: "version"
         column_length: 14
         executed_at_column_name: "executed_at"
         migrations_directory: "/data/doctrine/migrations-docs-example/lib/MyProject/Migrations"
         all_or_nothing: true
+        check_database_platform: true
 
     .. code-block:: xml
 
@@ -62,6 +64,8 @@ Now, in the root of your project place a file named ``migrations.php``, ``migrat
             <migrations-directory>/data/doctrine/migrations-docs-example/lib/MyProject/Migrations</migrations-directory>
 
             <all-or-nothing>true</all-or-nothing>
+
+            <check-database-platform>true</check-database-platform>
         </doctrine-migrations>
 
     .. code-block:: json
@@ -74,7 +78,8 @@ Now, in the root of your project place a file named ``migrations.php``, ``migrat
             "column_length": 14,
             "executed_at_column_name": "executed_at",
             "migrations_directory": "/data/doctrine/migrations-docs-example/lib/MyProject/Migrations",
-            "all_or_nothing": true
+            "all_or_nothing": true,
+            "check_database_platform": true
         }
 
 Please note that if you want to use the YAML configuration option, you will need to install the ``symfony/yaml`` package with composer:
@@ -85,27 +90,29 @@ Please note that if you want to use the YAML configuration option, you will need
 
 Here are details about what each configuration option does:
 
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| Name                       | Required   | Default                    | Description                                                                      |
-+============================+============+============================+==================================================================================+
-| name                       | no         | Doctrine Migrations        | The name that shows at the top of the migrations console application.            |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| migrations_namespace       | no         | null                       | The PHP namespace your migration classes are located under.                      |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| table_name                 | no         | doctrine_migration_versions| The name of the table to track executed migrations in.                           |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| column_name                | no         | version                    | The name of the column which stores the version name.                            |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| column_length              | no         | 14                         | The length of the column which stores the version name.                           |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| executed_at_column_name    | no         | executed_at                | The name of the column which stores the date that a migration was executed.      |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| migrations_directory       | no         | null                       | The path to a directory where to look for migration classes.                     |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| all_or_nothing             | no         | false                      | Whether or not to wrap multiple migrations in a single transaction.              |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
-| migrations                 | no         | []                         | Manually specify the array of migration versions instead of finding migrations.  |
-+----------------------------+------------+----------------------------+----------------------------------------------------------------------------------+
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| Name                       | Required   | Default                      | Description                                                                      |
++============================+============+==============================+==================================================================================+
+| name                       | no         | Doctrine Database Migrations | The name that shows at the top of the migrations console application.            |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| migrations_namespace       | yes        | null                         | The PHP namespace your migration classes are located under.                      |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| table_name                 | no         | doctrine_migration_versions  | The name of the table to track executed migrations in.                           |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| column_name                | no         | version                      | The name of the column which stores the version name.                            |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| column_length              | no         | 14                           | The length of the column which stores the version name.                          |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| executed_at_column_name    | no         | executed_at                  | The name of the column which stores the date that a migration was executed.      |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| migrations_directory       | yes        | null                         | The path to a directory where to look for migration classes.                     |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| all_or_nothing             | no         | false                        | Whether or not to wrap multiple migrations in a single transaction.              |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| migrations                 | no         | []                           | Manually specify the array of migration versions instead of finding migrations.  |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
+| check_database_platform    | no         | true                         | Whether to add a database platform check at the beginning of the generated code. |
++----------------------------+------------+------------------------------+----------------------------------------------------------------------------------+
 
 Manually Providing Migrations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

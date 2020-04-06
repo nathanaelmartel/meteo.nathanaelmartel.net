@@ -114,7 +114,7 @@ authenticators will be ignored, and can be blank.',
 
     public function guessUserNameField(SymfonyStyle $io, string $userClass, array $providers): string
     {
-        if (1 === \count($providers) && isset(current($providers)['entity'])) {
+        if (1 === \count($providers) && isset(current($providers)['entity']) && isset(current($providers)['entity']['property'])) {
             $entityProvider = current($providers);
 
             return $entityProvider['entity']['property'];
@@ -142,6 +142,24 @@ authenticators will be ignored, and can be blank.',
             sprintf('Which field on your <fg=yellow>%s</> class will people enter when logging in?', $userClass),
             $classProperties,
             property_exists($userClass, 'username') ? 'username' : (property_exists($userClass, 'email') ? 'email' : null)
+        );
+    }
+
+    public function guessEmailField(SymfonyStyle $io, string $userClass): string
+    {
+        if (property_exists($userClass, 'email')) {
+            return 'email';
+        }
+
+        $classProperties = [];
+        $reflectionClass = new \ReflectionClass($userClass);
+        foreach ($reflectionClass->getProperties() as $property) {
+            $classProperties[] = $property->name;
+        }
+
+        return $io->choice(
+            sprintf('Which field on your <fg=yellow>%s</> class holds the email address?', $userClass),
+            $classProperties
         );
     }
 
@@ -183,5 +201,43 @@ authenticators will be ignored, and can be blank.',
         }
 
         return $authenticatorClasses;
+    }
+
+    public function guessPasswordSetter(SymfonyStyle $io, string $userClass): string
+    {
+        $reflectionClass = new \ReflectionClass($userClass);
+
+        if ($reflectionClass->hasMethod('setPassword')) {
+            return 'setPassword';
+        }
+
+        $classMethods = [];
+        foreach ($reflectionClass->getMethods() as $method) {
+            $classMethods[] = $method->name;
+        }
+
+        return $io->choice(
+            sprintf('Which method on your <fg=yellow>%s</> class can be used to set the encoded password (e.g. setPassword())?', $userClass),
+            $classMethods
+        );
+    }
+
+    public function guessEmailGetter(SymfonyStyle $io, string $userClass): string
+    {
+        $reflectionClass = new \ReflectionClass($userClass);
+
+        if ($reflectionClass->hasMethod('getEmail')) {
+            return 'getEmail';
+        }
+
+        $classMethods = [];
+        foreach ($reflectionClass->getMethods() as $method) {
+            $classMethods[] = $method->name;
+        }
+
+        return $io->choice(
+            sprintf('Which method on your <fg=yellow>%s</> class can be used to get the email address (e.g. getEmail())?', $userClass),
+            $classMethods
+        );
     }
 }

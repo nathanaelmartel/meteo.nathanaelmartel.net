@@ -99,7 +99,7 @@ Optional attributes:
 
 -  **length**: Used by the "string" type to determine its maximum
    length in the database. Doctrine does not validate the length of a
-   string values for you.
+   string value for you.
 
 -  **precision**: The precision for a decimal (exact numeric) column
    (applies only for decimal column), which is the maximum number of
@@ -181,7 +181,7 @@ Examples:
     protected $initials;
 
     /**
-     * @Column(type="integer", name="login_count" nullable=false, options={"unsigned":true, "default":0})
+     * @Column(type="integer", name="login_count", nullable=false, options={"unsigned":true, "default":0})
      */
     protected $loginCount;
 

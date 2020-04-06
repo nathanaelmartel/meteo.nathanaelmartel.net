@@ -11,7 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Functional;
 
-class SessionTest extends WebTestCase
+class SessionTest extends AbstractWebTestCase
 {
     /**
      * Tests session attributes persist.
@@ -71,7 +71,7 @@ class SessionTest extends WebTestCase
 
     /**
      * See if two separate insulated clients can run without
-     * polluting eachother's session data.
+     * polluting each other's session data.
      *
      * @dataProvider getConfigs
      */

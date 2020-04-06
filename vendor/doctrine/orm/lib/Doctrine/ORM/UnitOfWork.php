@@ -46,6 +46,7 @@ use Doctrine\ORM\Utility\IdentifierFlattener;
 use InvalidArgumentException;
 use Throwable;
 use UnexpectedValueException;
+use function get_class;
 
 /**
  * The UnitOfWork is responsible for tracking changes to objects during an
@@ -90,7 +91,7 @@ class UnitOfWork implements PropertyChangedListener
     /**
      * Hint used to collect all primary keys of associated entities during hydration
      * and execute it in a dedicated query afterwards
-     * @see https://doctrine-orm.readthedocs.org/en/latest/reference/dql-doctrine-query-language.html?highlight=eager#temporarily-change-fetch-mode-in-dql
+     * @see https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/dql-doctrine-query-language.html#temporarily-change-fetch-mode-in-dql
      */
     const HINT_DEFEREAGERLOAD = 'deferEagerLoad';
 
@@ -356,6 +357,8 @@ class UnitOfWork implements PropertyChangedListener
             $this->dispatchOnFlushEvent();
             $this->dispatchPostFlushEvent();
 
+            $this->postCommitCleanup($entity);
+
             return; // Nothing to do.
         }
 
@@ -378,7 +381,18 @@ class UnitOfWork implements PropertyChangedListener
         try {
             // Collection deletions (deletions of complete collections)
             foreach ($this->collectionDeletions as $collectionToDelete) {
-                $this->getCollectionPersister($collectionToDelete->getMapping())->delete($collectionToDelete);
+                if (! $collectionToDelete instanceof PersistentCollection) {
+                    $this->getCollectionPersister($collectionToDelete->getMapping())->delete($collectionToDelete);
+
+                    continue;
+                }
+
+                // Deferred explicit tracked collections can be removed only when owning relation was persisted
+                $owner = $collectionToDelete->getOwner();
+
+                if ($this->em->getClassMetadata(get_class($owner))->isChangeTrackingDeferredImplicit() || $this->isScheduledForDirtyCheck($owner)) {
+                    $this->getCollectionPersister($collectionToDelete->getMapping())->delete($collectionToDelete);
+                }
             }
 
             if ($this->entityInsertions) {
@@ -1864,7 +1878,7 @@ class UnitOfWork implements PropertyChangedListener
      * @throws OptimisticLockException If the entity uses optimistic locking through a version
      *         attribute and the version check against the managed copy fails.
      *
-     * @todo Require active transaction!? OptimisticLockException may result in undefined state!?
+     * @deprecated 2.7 This method is being removed from the ORM and won't have any replacement
      */
     public function merge($entity)
     {
@@ -2054,6 +2068,8 @@ class UnitOfWork implements PropertyChangedListener
      * @param object $entity The entity to detach.
      *
      * @return void
+     *
+     * @deprecated 2.7 This method is being removed from the ORM and won't have any replacement
      */
     public function detach($entity)
     {
@@ -2481,22 +2497,23 @@ class UnitOfWork implements PropertyChangedListener
     public function clear($entityName = null)
     {
         if ($entityName === null) {
-            $this->identityMap =
-            $this->entityIdentifiers =
-            $this->originalEntityData =
-            $this->entityChangeSets =
-            $this->entityStates =
-            $this->scheduledForSynchronization =
-            $this->entityInsertions =
-            $this->entityUpdates =
-            $this->entityDeletions =
+            $this->identityMap                    =
+            $this->entityIdentifiers              =
+            $this->originalEntityData             =
+            $this->entityChangeSets               =
+            $this->entityStates                   =
+            $this->scheduledForSynchronization    =
+            $this->entityInsertions               =
+            $this->entityUpdates                  =
+            $this->entityDeletions                =
             $this->nonCascadedNewDetectedEntities =
-            $this->collectionDeletions =
-            $this->collectionUpdates =
-            $this->extraUpdates =
-            $this->readOnlyObjects =
-            $this->visitedCollections =
-            $this->orphanRemovals = [];
+            $this->collectionDeletions            =
+            $this->collectionUpdates              =
+            $this->extraUpdates                   =
+            $this->readOnlyObjects                =
+            $this->visitedCollections             =
+            $this->eagerLoadingEntities           =
+            $this->orphanRemovals                 = [];
         } else {
             $this->clearIdentityMapForEntityName($entityName);
             $this->clearEntityInsertionsForEntityName($entityName);
