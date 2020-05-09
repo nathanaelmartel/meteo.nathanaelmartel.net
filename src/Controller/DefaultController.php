@@ -2,30 +2,27 @@
 
 namespace App\Controller;
 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
+use App\SimplementWeb\SettingsBundle\Service\Setting;
+use App\SimplementWeb\HistoryBundle\Service\History;
 
-class DefaultController extends BaseController
+class DefaultController extends AbstractController
 {
     /**
-     * @Route("/", name="default")
+     * @Route("/", name="home")
      */
-    public function default()
+    public function index(Setting $setting, History $history)
     {
-        $em = $this->getDoctrine()->getManager();
-        $day_end = new \DateTime();
-        $day_start = new \DateTime('-12 hours');
+        /*$setting->get('key');
+        $setting->set('key', 'value');
+        $setting->group('key');*/
 
-        $stats = $em->getRepository('App:Measure')->getStat($day_end, $day_start, 13);
+        //$h = $history->add('Test', null, 'information', ['foo' => 'bar']);
+        //$history->add('Beta', $h, 'information', ['foo' => 'bar']);
 
-        return $this->render('stat/day.html.twig', [
-                'day_end' => $day_end,
-                'day_start' => $day_start,
-                'stats' => $stats,
-                'pagination' => [],
-                'current_year' => '',
-                'route' => 'admin_order_stat_day_site',
-                'last_temperature_date' => new \DateTime($this->getSetting('last_temperature')),
-                'graph' => '',
-            ]);
+        return $this->render('default/index.html.twig', [
+            'controller_name' => 'DefaultController',
+        ]);
     }
 }

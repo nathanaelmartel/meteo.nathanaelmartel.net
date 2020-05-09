@@ -13,6 +13,7 @@ namespace Symfony\Component\Security\Core\Authorization;
 
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
+use Symfony\Component\Security\Core\Exception\InvalidArgumentException;
 
 /**
  * AccessDecisionManager is the base class for all access decision managers
@@ -63,7 +64,7 @@ class AccessDecisionManager implements AccessDecisionManagerInterface
 
         // Special case for AccessListener, do not remove the right side of the condition before 6.0
         if (\count($attributes) > 1 && !$allowMultipleAttributes) {
-            @trigger_error(sprintf('Passing more than one Security attribute to "%s()" is deprecated since Symfony 4.4. Use multiple "decide()" calls or the expression language (e.g. "is_granted(...) or is_granted(...)") instead.', __METHOD__), E_USER_DEPRECATED);
+            throw new InvalidArgumentException(sprintf('Passing more than one Security attribute to "%s()" is not supported.', __METHOD__));
         }
 
         return $this->{$this->strategy}($token, $attributes, $object);

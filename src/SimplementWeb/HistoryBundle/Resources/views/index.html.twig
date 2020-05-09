@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Outils - Historique
+{% endblock %}
+
+{% block breadcrumbitems %}
+    <span class="breadcrumb-item active">Historique</span>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="card">
+                <div class="card-header bg-white header-elements-inline">
+                    <h2 class="card-title">Historique</h2>
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-hover">
+
+                        <thead>
+                            <tr class="headings">
+                                <th class="column-title">Id</th>
+                                <th class="column-title">Utilisateur</th>
+                                <th class="column-title">Action</th>
+                                <th class="column-title">Objet</th>
+                                <th class="column-title">Info</th>
+                                <th class="column-title">Date</th>
+                                <th class="column-title">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for history in histories %}
+                                <tr class="pointer">
+                                    <td>
+                                        <a href=" {{ path('tools_history_show', { 'id': history.id }) }} ">
+                                            <code>{{ history.id }}</code>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {#% if history.user %}
+                                            {{ history.user }}
+                                        {% endif %#}
+                                    </td>
+                                    <td>
+                                        <a href=" {{ path('tools_history_show', { 'id': history.id }) }} ">{{ history.name }}</a>
+                                    </td>
+                                    <td>
+                                        {{ history.getObjectTypeName }}
+                                        {{ history.objectid }}
+                                    </td>
+                                    <td>{{ history.info }}</td>
+                                    <td>
+                                        {% if history.created %}{{ history.created|date('H:i d/m/Y') }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="">
+                                        <a href=" {{ path('tools_history_show', { 'id': history.id }) }} ">
+                                            <i class="fa fa-eye"></i>
+                                            Afficher
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -26,6 +26,7 @@ class UnusedTagsPass implements CompilerPassInterface
         'auto_alias',
         'cache.pool',
         'cache.pool.clearer',
+        'chatter.transport_factory',
         'config_cache.resource_checker',
         'console.command',
         'container.env_var_loader',
@@ -56,6 +57,7 @@ class UnusedTagsPass implements CompilerPassInterface
         'messenger.transport_factory',
         'mime.mime_type_guesser',
         'monolog.logger',
+        'notifier.channel',
         'property_info.access_extractor',
         'property_info.initializable_extractor',
         'property_info.list_extractor',
@@ -69,7 +71,7 @@ class UnusedTagsPass implements CompilerPassInterface
         'security.voter',
         'serializer.encoder',
         'serializer.normalizer',
-        'templating.helper',
+        'texter.transport_factory',
         'translation.dumper',
         'translation.extractor',
         'translation.loader',
@@ -79,7 +81,6 @@ class UnusedTagsPass implements CompilerPassInterface
         'validator.auto_mapper',
         'validator.constraint_validator',
         'validator.initializer',
-        'workflow.definition',
     ];
 
     public function process(ContainerBuilder $container)

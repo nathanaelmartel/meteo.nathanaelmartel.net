@@ -1,0 +1,7 @@
+.nav-item-submenu > .nav-link::after {
+    content: '\f105';
+}
+
+.dropdown-toggle::after {
+    content: '\f107';
+}

@@ -49,7 +49,7 @@ class UsernamePasswordToken extends AbstractToken
     /**
      * {@inheritdoc}
      */
-    public function setAuthenticated($isAuthenticated)
+    public function setAuthenticated(bool $isAuthenticated)
     {
         if ($isAuthenticated) {
             throw new \LogicException('Cannot set this token to trusted after instantiation.');

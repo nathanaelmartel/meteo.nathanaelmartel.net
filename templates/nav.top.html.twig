@@ -1,64 +1,62 @@
-<div class="navbar navbar-inverse">
-    <div class="navbar-header">
-        <a class="navbar-brand" href="index.html"><img src="/assets/images/logo.png" alt=""></a>
+<div class="navbar navbar-expand-md navbar-light">
+    <div class="navbar-brand">
+        <a href="{{ path('home') }}" class="d-inline-block">
+            <img src="/assets/images/logo_dark.png" alt="">
+        </a>
+    </div>
+    {#
+    <div class="d-md-none">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-mobile">
+            <i class="fal fa-angle-down"></i>
+        </button>
+        <button class="navbar-toggler sidebar-mobile-main-toggle" type="button">
+            <i class="fal fa-bars"></i>
+        </button>
+    </div>
 
-        <ul class="nav navbar-nav pull-right visible-xs-block">
-            <li>
-                <a data-toggle="collapse" data-target="#navbar-mobile">
+    <div class="collapse navbar-collapse" id="navbar-mobile">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a href="#" class="navbar-nav-link sidebar-control sidebar-main-toggle d-none d-md-block">
                     <i class="fal fa-bars"></i>
                 </a>
             </li>
         </ul>
-    </div>
 
-    <div class="navbar-collapse collapse" id="navbar-mobile">
-        <ul class="nav navbar-nav">
-            <li>
-                <a class="sidebar-control sidebar-main-toggle hidden-xs">
-                    <i class="fal fa-bars"></i>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a href="#" class="navbar-nav-link">
+                    Text link
                 </a>
             </li>
-        </ul>
 
-        <ul class="nav navbar-nav navbar-right">
+            <li class="nav-item dropdown">
+                <a href="#" class="navbar-nav-link">
+                    <i class="fad fa-bell"></i>
+                    <span class="d-md-none ml-2">Notifications</span>
+                    <span class="badge badge-mark border-white ml-auto ml-md-0"></span>
+                </a>
+            </li>
 
-            {% if app.user %}
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
-                        <i class="fal fa-user"></i>
-                        {{ app.user.fullname }}
-                        <i class="fal fa-chevron-down"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-right">
-                        <li>
-                            <a href="{{ path('profile_edit') }}">
-                                <i class="fal fa-user"></i>
-                                My profile
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ path('profile_edit_password') }}">
-                                <i class="fal fa-key"></i>
-                                My password
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ path('app_logout') }}">
-                                <i class="fal fa-sign-out"></i>
-                                Logout
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            {% else %}
-                <li>
-                    <a href="{{ path('app_login') }}">
-                        <i class="fal fa-sign-in"></i>
-                        Login
-                    </a>
-                </li>
-            {% endif %}
+            <li class="nav-item dropdown dropdown-user">
+                <a href="#" class="navbar-nav-link d-flex align-items-center dropdown-toggle" data-toggle="dropdown">
+                    <img src="/assets/images/image.png" class="rounded-circle mr-2" height="34" alt="">
+                    <span>Victoria</span>
+                </a>
 
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a href="#" class="dropdown-item">
+                        <i class="fad fa-user"></i>
+                        My profile</a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fad fa-key"></i>
+                        Password</a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fad fa-sign-out"></i>
+                        Logout</a>
+                </div>
+            </li>
         </ul>
     </div>
+    #}
 </div>

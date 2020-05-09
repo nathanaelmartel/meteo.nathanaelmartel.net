@@ -16,11 +16,9 @@ use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Cache\ArrayCache;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\Translation\TranslatorInterface as LegacyTranslatorInterface;
 use Symfony\Component\Validator\Context\ExecutionContextFactory;
 use Symfony\Component\Validator\Exception\LogicException;
 use Symfony\Component\Validator\Exception\ValidatorException;
-use Symfony\Component\Validator\Mapping\Cache\CacheInterface;
 use Symfony\Component\Validator\Mapping\Factory\LazyLoadingMetadataFactory;
 use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
 use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
@@ -29,8 +27,8 @@ use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
 use Symfony\Component\Validator\Mapping\Loader\XmlFileLoader;
 use Symfony\Component\Validator\Mapping\Loader\YamlFileLoader;
-use Symfony\Component\Validator\Util\LegacyTranslatorProxy;
 use Symfony\Component\Validator\Validator\RecursiveValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\LocaleAwareInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Contracts\Translation\TranslatorTrait;
@@ -41,11 +39,9 @@ class_exists(LocaleAwareInterface::class);
 class_exists(TranslatorTrait::class);
 
 /**
- * The default implementation of {@link ValidatorBuilderInterface}.
- *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class ValidatorBuilder implements ValidatorBuilderInterface
+class ValidatorBuilder
 {
     private $initializers = [];
     private $loaders = [];
@@ -84,7 +80,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     private $translationDomain;
 
     /**
-     * {@inheritdoc}
+     * Adds an object initializer to the validator.
+     *
+     * @return $this
      */
     public function addObjectInitializer(ObjectInitializerInterface $initializer)
     {
@@ -94,7 +92,11 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Adds a list of object initializers to the validator.
+     *
+     * @param ObjectInitializerInterface[] $initializers
+     *
+     * @return $this
      */
     public function addObjectInitializers(array $initializers)
     {
@@ -104,7 +106,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Adds an XML constraint mapping file to the validator.
+     *
+     * @return $this
      */
     public function addXmlMapping($path)
     {
@@ -118,7 +122,11 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Adds a list of XML constraint mapping files to the validator.
+     *
+     * @param string[] $paths The paths to the mapping files
+     *
+     * @return $this
      */
     public function addXmlMappings(array $paths)
     {
@@ -132,7 +140,11 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Adds a YAML constraint mapping file to the validator.
+     *
+     * @param string $path The path to the mapping file
+     *
+     * @return $this
      */
     public function addYamlMapping($path)
     {
@@ -146,7 +158,11 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Adds a list of YAML constraint mappings file to the validator.
+     *
+     * @param string[] $paths The paths to the mapping files
+     *
+     * @return $this
      */
     public function addYamlMappings(array $paths)
     {
@@ -160,7 +176,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Enables constraint mapping using the given static method.
+     *
+     * @return $this
      */
     public function addMethodMapping($methodName)
     {
@@ -174,7 +192,11 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Enables constraint mapping using the given static methods.
+     *
+     * @param string[] $methodNames The names of the methods
+     *
+     * @return $this
      */
     public function addMethodMappings(array $methodNames)
     {
@@ -188,7 +210,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Enables annotation based constraint mapping.
+     *
+     * @return $this
      */
     public function enableAnnotationMapping(Reader $annotationReader = null)
     {
@@ -210,7 +234,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Disables annotation based constraint mapping.
+     *
+     * @return $this
      */
     public function disableAnnotationMapping()
     {
@@ -220,7 +246,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Sets the class metadata factory used by the validator.
+     *
+     * @return $this
      */
     public function setMetadataFactory(MetadataFactoryInterface $metadataFactory)
     {
@@ -229,26 +257,6 @@ class ValidatorBuilder implements ValidatorBuilderInterface
         }
 
         $this->metadataFactory = $metadataFactory;
-
-        return $this;
-    }
-
-    /**
-     * Sets the cache for caching class metadata.
-     *
-     * @return $this
-     *
-     * @deprecated since Symfony 4.4.
-     */
-    public function setMetadataCache(CacheInterface $cache)
-    {
-        @trigger_error(sprintf('%s is deprecated since Symfony 4.4. Use setMappingCache() instead.', __METHOD__), E_USER_DEPRECATED);
-
-        if (null !== $this->metadataFactory) {
-            throw new ValidatorException('You cannot set a custom metadata cache after setting a custom metadata factory. Configure your metadata factory instead.');
-        }
-
-        $this->mappingCache = $cache;
 
         return $this;
     }
@@ -270,7 +278,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Sets the constraint validator factory used by the validator.
+     *
+     * @return $this
      */
     public function setConstraintValidatorFactory(ConstraintValidatorFactoryInterface $validatorFactory)
     {
@@ -280,23 +290,25 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Sets the translator used for translating violation messages.
      *
-     * @final since Symfony 4.2
+     * @return $this
      */
-    public function setTranslator(LegacyTranslatorInterface $translator)
+    public function setTranslator(TranslatorInterface $translator)
     {
         $this->translator = $translator;
-
-        while ($this->translator instanceof LegacyTranslatorProxy) {
-            $this->translator = $this->translator->getTranslator();
-        }
 
         return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * Sets the default translation domain of violation messages.
+     *
+     * The same message can have different translations in different domains.
+     * Pass the domain that is used for violation messages by default to this
+     * method.
+     *
+     * @return $this
      */
     public function setTranslationDomain($translationDomain)
     {
@@ -342,7 +354,9 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Builds and returns a new validator object.
+     *
+     * @return ValidatorInterface
      */
     public function getValidator()
     {

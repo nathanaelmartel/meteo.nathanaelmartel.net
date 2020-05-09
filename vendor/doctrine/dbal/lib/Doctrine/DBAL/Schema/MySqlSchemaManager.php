@@ -9,21 +9,40 @@ use const CASE_LOWER;
 use function array_change_key_case;
 use function array_shift;
 use function array_values;
-use function end;
+use function assert;
 use function explode;
+use function is_string;
 use function preg_match;
-use function preg_replace;
-use function str_replace;
-use function stripslashes;
 use function strpos;
 use function strtok;
 use function strtolower;
+use function strtr;
 
 /**
  * Schema manager for the MySql RDBMS.
  */
 class MySqlSchemaManager extends AbstractSchemaManager
 {
+    /**
+     * @see https://mariadb.com/kb/en/library/string-literals/#escape-sequences
+     */
+    private const MARIADB_ESCAPE_SEQUENCES = [
+        '\\0' => "\0",
+        "\\'" => "'",
+        '\\"' => '"',
+        '\\b' => "\b",
+        '\\n' => "\n",
+        '\\r' => "\r",
+        '\\t' => "\t",
+        '\\Z' => "\x1a",
+        '\\\\' => '\\',
+        '\\%' => '%',
+        '\\_' => '_',
+
+        // Internally, MariaDB escapes single quotes using the standard syntax
+        "''" => "'",
+    ];
+
     /**
      * {@inheritdoc}
      */
@@ -79,14 +98,6 @@ class MySqlSchemaManager extends AbstractSchemaManager
     /**
      * {@inheritdoc}
      */
-    protected function _getPortableSequenceDefinition($sequence)
-    {
-        return end($sequence);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     protected function _getPortableDatabaseDefinition($database)
     {
         return $database['Database'];
@@ -101,6 +112,8 @@ class MySqlSchemaManager extends AbstractSchemaManager
 
         $dbType = strtolower($tableColumn['type']);
         $dbType = strtok($dbType, '(), ');
+        assert(is_string($dbType));
+
         $length = $tableColumn['length'] ?? strtok('(), ');
 
         $fixed = null;
@@ -192,6 +205,9 @@ class MySqlSchemaManager extends AbstractSchemaManager
 
         $column = new Column($tableColumn['field'], Type::getType($type), $options);
 
+        if (isset($tableColumn['characterset'])) {
+            $column->setPlatformOption('charset', $tableColumn['characterset']);
+        }
         if (isset($tableColumn['collation'])) {
             $column->setPlatformOption('collation', $tableColumn['collation']);
         }
@@ -220,15 +236,11 @@ class MySqlSchemaManager extends AbstractSchemaManager
         if ($columnDefault === 'NULL' || $columnDefault === null) {
             return null;
         }
-        if ($columnDefault[0] === "'") {
-            return stripslashes(
-                str_replace(
-                    "''",
-                    "'",
-                    preg_replace('/^\'(.*)\'$/', '$1', $columnDefault)
-                )
-            );
+
+        if (preg_match('/^\'(.*)\'$/', $columnDefault, $matches)) {
+            return strtr($matches[1], self::MARIADB_ESCAPE_SEQUENCES);
         }
+
         switch ($columnDefault) {
             case 'current_timestamp()':
                 return $platform->getCurrentTimestampSQL();
@@ -237,6 +249,7 @@ class MySqlSchemaManager extends AbstractSchemaManager
             case 'curtime()':
                 return $platform->getCurrentTimeSQL();
         }
+
         return $columnDefault;
     }
 

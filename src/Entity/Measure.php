@@ -31,6 +31,11 @@ class Measure
      */
     private $measured_at;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $stated_at;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -68,6 +73,18 @@ class Measure
     public function setMeasuredAt(\DateTimeInterface $measured_at): self
     {
         $this->measured_at = $measured_at;
+
+        return $this;
+    }
+
+    public function getStatedAt(): ?\DateTimeInterface
+    {
+        return $this->stated_at;
+    }
+
+    public function setStatedAt(?\DateTimeInterface $stated_at): self
+    {
+        $this->stated_at = $stated_at;
 
         return $this;
     }

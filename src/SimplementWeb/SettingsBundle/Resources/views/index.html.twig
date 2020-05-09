@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Paramètres
+    {% if breadcrumb is defined %}-
+        {{ breadcrumb }}
+    {% endif %}
+    -
+    {{ setting_title }}
+{% endblock %}
+
+{% block breadcrumbitems %}
+    <span class="breadcrumb-item">Paramètres</span>
+
+    {% if breadcrumb is defined %}
+        <span class="breadcrumb-item">{{ breadcrumb }}</span>
+    {% endif %}
+
+    <span class="breadcrumb-item active">{{ setting_title }}</span>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="card">
+                <div class="card-header bg-white header-elements-inline">
+                    <h2 class="card-title">{{ setting_title }}</h2>
+                </div>
+
+                <div class="card-body">
+                    <form action="" class="form-horizontal form-label-left" method="POST">
+                        {% for key, setting in settings %}
+                            <div class="form-group row">
+                                <label for="{{key}}" class="col-sm-2 col-form-label">{{setting.label}}</label>
+                                <div class="col-sm-10">
+                                    {% if (setting.disabled) %}
+                                        {% if (setting.type == 'img') %}
+                                            <img src="{{ setting.value }}" alt=""/>
+                                        {% else %}
+                                            <pre>{{ setting.value }}</pre>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if (setting.type == 'text') %}
+                                            <input id="{{key}}" name="{{key}}" type="text" class="form-control" value="{{ setting.value }}"/>
+                                        {% elseif (setting.type == 'number') %}
+                                            <input id="{{key}}" name="{{key}}" type="number" class="form-control" value="{{ setting.value }}" min="{{ setting.min }}" max="{{ setting.max }}"/>
+                                        {% elseif (setting.type == 'textarea')  %}
+                                            <textarea name="{{key}}" id="{{key}}" class="form-control" cols="30" rows="10">{{ setting.value|raw }}</textarea>
+                                        {% elseif (setting.type == 'select')  %}
+                                            <select name="{{key}}" id="{{key}}" class="form-control">
+                                                {% for key, value in setting.options %}
+                                                    <option value="{{key}}" {% if setting.value == key %} selected="selected" {% endif %}>{{value}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if setting.help is defined and setting.help != '' %}
+                                        <p class="text-muted">{{ setting.help|raw }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <div class="ln_solid"></div>
+                        <input type="submit" class="btn btn-success" value="Enregistrer"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

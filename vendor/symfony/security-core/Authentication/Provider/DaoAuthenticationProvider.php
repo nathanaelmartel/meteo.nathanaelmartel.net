@@ -74,7 +74,7 @@ class DaoAuthenticationProvider extends UserAuthenticationProvider
     /**
      * {@inheritdoc}
      */
-    protected function retrieveUser($username, UsernamePasswordToken $token)
+    protected function retrieveUser(string $username, UsernamePasswordToken $token)
     {
         $user = $token->getUser();
         if ($user instanceof UserInterface) {

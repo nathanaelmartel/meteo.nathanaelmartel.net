@@ -1,71 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ app.request.locale }}">
     <head>
-        <meta charset="UTF-8">
+        <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>
-            {% block title %}{% endblock %}
-            — simplement Web</title>
+            {% block title %}Welcome!{% endblock %}
+        </title>
+
         {% block stylesheets %}
+            <link href="/assets/fonts/fontawesome/css/all.css" rel="stylesheet" type="text/css">
             <link href="/assets/css/bootstrap.css" rel="stylesheet" type="text/css">
-            <link href="/assets/css/core.css" rel="stylesheet" type="text/css">
+            <link href="/assets/css/bootstrap_limitless.css" rel="stylesheet" type="text/css">
+            <link href="/assets/css/layout.css" rel="stylesheet" type="text/css">
             <link href="/assets/css/components.css" rel="stylesheet" type="text/css">
-            <link href="/assets/fonts/fontawesome/css/all.min.css" rel="stylesheet" type="text/css">
-            <link href="/assets/css/manager.css" rel="stylesheet" type="text/css">
+            <link href="/assets/css/colors.css" rel="stylesheet" type="text/css">
+            <link href="/assets/css/app.css" rel="stylesheet" type="text/css">
         {% endblock %}
+
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+        <link rel="icon" type="image/png" href="/favicon.png"/>
+        <link type="text/plain" rel="author" href="Nathanaël Martel - simplement Web"/>
+
+        {% block head %}{% endblock %}
+
     </head>
-    <body class="{% block bodyclass %}{% endblock %}">
+
+    <body>
+
         {% include('nav.top.html.twig') %}
-        <div class="page-container">
-            <div class="page-content">
-                {% include('nav.left.html.twig') %}
-                <div class="content-wrapper">
 
-                    <div class="page-header page-header-default page-header-xs">
-                        {#
-                        <div class="page-header-content">
-                            <div class="page-title">
-                                <h4>
-                                    {% block heading %}{% endblock %}
-                                </h4>
+        <div class="page-content">
+
+            {#% include('nav.left.html.twig') %#}
+
+            <div class="content-wrapper">
+
+                <div class="page-header page-header-light">
+
+                    <div class="breadcrumb-line breadcrumb-line-light header-elements-md-inline">
+                        <div class="d-flex">
+                            <div class="breadcrumb">
+                                <a href="{{ path('home') }}" class="breadcrumb-item">
+                                    Dashboard
+                                </a>
+                                {% block breadcrumbitems %}
+                                    <span class="breadcrumb-item active">{{ app.request.attributes.get("_controller") }}</span>
+                                {% endblock %}
                             </div>
 
-                            <div class="heading-elements">
-                                <div class="btn-group">
-                                    {% block headingbutton %}{% endblock %}
-                                </div>
-                            </div>
-                        </div>
-                        #}
-
-                        <div class="breadcrumb-line">
-                            <a class="breadcrumb-elements-toggle">
-                                <i class="fal fa-bars"></i>
+                            <a href="#" class="header-elements-toggle text-default d-md-none">
+                                <i class="fad fa-ellipsis-v-alt"></i>
                             </a>
-                            <ul class="breadcrumb">
-                                {% block breadcrumbitems %}{% endblock %}
-                            </ul>
-                            <ul class="breadcrumb-elements">
-                                {% block breadcrumbbutton %}{% endblock %}
-                            </ul>
                         </div>
-                    </div>
 
-                    <div class="content">
-                        {% include('flash.html.twig') %}
-                        {% block body %}{% endblock %}
+                        <div class="header-elements d-none">
+                            <div class="breadcrumb justify-content-center">
+                                {% block breadcrumbbutton %}
+                                    {#
+                                    <a href="#" class="breadcrumb-elements-item">
+                                        Link
+                                    </a>
+
+                                    <div class="breadcrumb-elements-item dropdown p-0">
+                                        <a href="#" class="breadcrumb-elements-item dropdown-toggle" data-toggle="dropdown">
+                                            Dropdown
+                                        </a>
+
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a href="#" class="dropdown-item">Action</a>
+                                            <a href="#" class="dropdown-item">Another action</a>
+                                            <a href="#" class="dropdown-item">One more action</a>
+                                            <div class="dropdown-divider"></div>
+                                            <a href="#" class="dropdown-item">Separate action</a>
+                                        </div>
+                                    </div>
+                                    #}
+                                {% endblock %}
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="content">
+                    {% block body %}{% endblock %}
+                </div>
+
+                {% include('footer.html.twig') %}
+
             </div>
+
         </div>
+
         {% block javascripts %}
-            <script type="text/javascript" src="/assets/js/plugins/loaders/pace.min.js"></script>
-            <script type="text/javascript" src="/assets/js/core/libraries/jquery.min.js"></script>
-            <script type="text/javascript" src="/assets/js/core/libraries/bootstrap.min.js"></script>
-            <script type="text/javascript" src="/assets/js/plugins/loaders/blockui.min.js"></script>
-            <script type="text/javascript" src="/assets/js/core/app.js"></script>
-            <script type="text/javascript" src="/assets/js/manager.js"></script>
+            <script src="/assets/js/main/jquery.min.js"></script>
+            <script src="/assets/js/main/bootstrap.bundle.min.js"></script>
+            <script src="/assets/js/plugins/loaders/blockui.min.js"></script>
+            <script src="/assets/js/app.js"></script>
         {% endblock %}
     </body>
 </html>

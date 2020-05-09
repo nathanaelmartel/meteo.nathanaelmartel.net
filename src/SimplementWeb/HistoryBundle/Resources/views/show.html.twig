@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Outils - Historique -
+    {{ history.name }}
+{% endblock %}
+
+{% block breadcrumbitems %}
+    <span class="breadcrumb-item">
+        <a href="{{ path('tools_history_index') }}">Historique</a>
+    </span>
+
+    <span class="breadcrumb-item active">{{ history.name }}</span>
+{% endblock %}
+
+{% block body %}
+
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Nom
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.name }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Status
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.status }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Utilisateur
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {#{ history.user }#}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Object type
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.objecttypename }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Object type
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.objecttype }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Object id
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.objectid }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Info
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.info }}
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Data
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            <pre>{{ history.data }}</pre>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Date
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {% if history.created %}{{ history.created|date('Y-m-d H:i:s') }}
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
+                            Level
+                        </div>
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            {{ history.level }}
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

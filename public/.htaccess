@@ -1,51 +1,3 @@
-
-FileETag MTime Size
-<ifmodule mod_expires.c>
-    <filesmatch ".(jpg|gif|png|css|js|ico|eot|svg|ttf|woff)$">
-         ExpiresActive on
-         ExpiresDefault "access plus 1 year"
-     </filesmatch>
-</ifmodule>
-
-<IfModule mod_deflate.c>
-
-  # Force deflate for mangled headers developer.yahoo.com/blogs/ydn/posts/2010/12/pushing-beyond-gzipping/
-  <IfModule mod_setenvif.c>
-    <IfModule mod_headers.c>
-      SetEnvIfNoCase ^(Accept-EncodXng|X-cept-Encoding|X{15}|~{15}|-{15})$ ^((gzip|deflate)\s*,?\s*)+|[X~-]{4,13}$ HAVE_Accept-Encoding
-      RequestHeader append Accept-Encoding "gzip,deflate" env=HAVE_Accept-Encoding
-    </IfModule>
-  </IfModule>
-
-  # Compress all output labeled with one of the following MIME-types
-  <IfModule mod_filter.c>
-    AddOutputFilterByType DEFLATE application/atom+xml \
-                                  application/javascript \
-                                  application/json \
-                                  application/rss+xml \
-                                  application/vnd.ms-fontobject \
-                                  application/x-font-ttf \
-                                  application/xhtml+xml \
-                                  application/xml \
-                                  font/opentype \
-                                  image/svg+xml \
-                                  image/x-icon \
-                                  text/css \
-                                  text/html \
-                                  text/plain \
-                                  text/x-component \
-                                  text/xml
-  </IfModule>
-
-</IfModule>
-
-
-
-#<IfModule mod_headers.c>
-# Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';img-src 'self' data:  'unsafe-inline' data https://api.tiles.mapbox.com/; frame-ancestors 'self'; frame-src 'self';"
-#</IfModule>
-
-
 # Use the front controller as index file. It serves as a fallback solution when
 # every other rewrite/redirect fails (e.g. in an aliased environment without
 # mod_rewrite). Additionally, this reduces the matching process for the
@@ -59,8 +11,8 @@ DirectoryIndex index.php
 # when compiling LESS/Sass/CoffeScript assets.
 # Options FollowSymlinks
 
-# Disabling MultiViews prevents unwanted negotiation, e.g. "/app" should not resolve
-# to the front controller "/index.php" but be rewritten to "/index.php/app".
+# Disabling MultiViews prevents unwanted negotiation, e.g. "/index" should not resolve
+# to the front controller "/index.php" but be rewritten to "/index.php/index".
 <IfModule mod_negotiation.c>
     Options -MultiViews
 </IfModule>
@@ -75,12 +27,12 @@ DirectoryIndex index.php
     # work in environments without path prefix as well, providing a safe, one-size
     # fits all solution. But as you do not need it in this case, you can comment
     # the following 2 lines to eliminate the overhead.
-    RewriteCond %{REQUEST_URI}::$1 ^(/.+)/(.*)::\2$
-    RewriteRule ^(.*) - [E=BASE:%1]
+    RewriteCond %{REQUEST_URI}::$0 ^(/.+)/(.*)::\2$
+    RewriteRule .* - [E=BASE:%1]
 
     # Sets the HTTP_AUTHORIZATION header removed by Apache
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
 
     # Redirect to URI without front controller to prevent duplicate content
     # (with and without `/index.php`). Only do this redirect on the initial
@@ -93,15 +45,13 @@ DirectoryIndex index.php
     # - disable this feature by commenting the following 2 lines or
     # - use Apache >= 2.3.9 and replace all L flags by END flags and remove the
     #   following RewriteCond (best solution)
-    RewriteCond %{ENV:REDIRECT_STATUS} ^$
-    RewriteRule ^app\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
 
     # If the requested filename exists, simply serve it.
     # We only want to let Apache serve files and not directories.
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ - [L]
-
     # Rewrite all other queries to the front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ %{ENV:BASE}/index.php [L]
 </IfModule>
 
@@ -110,7 +60,7 @@ DirectoryIndex index.php
         # When mod_rewrite is not available, we instruct a temporary redirect of
         # the start page to the front controller explicitly so that the website
         # and the generated links can still be used.
-        RedirectMatch 302 ^/$ /index.php/
+        RedirectMatch 307 ^/$ /index.php/
         # RedirectTemp cannot be used instead
     </IfModule>
 </IfModule>

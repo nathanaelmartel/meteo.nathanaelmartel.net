@@ -28,12 +28,10 @@ class_exists(AnonymousToken::class);
  *
  * @author Fabien Potencier <fabien@symfony.com>
  *
- * @final since Symfony 4.3
+ * @final
  */
-class AnonymousAuthenticationListener extends AbstractListener implements ListenerInterface
+class AnonymousAuthenticationListener extends AbstractListener
 {
-    use LegacyListenerTrait;
-
     private $tokenStorage;
     private $secret;
     private $authenticationManager;

@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\SecurityBundle\Debug;
 
-use Symfony\Component\Security\Http\Firewall\LegacyListenerTrait;
 use Symfony\Component\VarDumper\Caster\ClassStub;
 
 /**
@@ -21,8 +20,6 @@ use Symfony\Component\VarDumper\Caster\ClassStub;
  */
 trait TraceableListenerTrait
 {
-    use LegacyListenerTrait;
-
     private $response;
     private $listener;
     private $time;

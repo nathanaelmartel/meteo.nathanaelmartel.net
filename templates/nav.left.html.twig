@@ -1,81 +1,131 @@
-{% if app.user %}
-    <div class="sidebar sidebar-main">
-        <div class="sidebar-content">
+<div class="sidebar sidebar-dark sidebar-main sidebar-expand-md">
 
-            {#
-            <div class="sidebar-user">
-                <div class="category-content">
-                    <div class="media">
-                        <a href="#" class="media-left"><img src="/assets/images/placeholder.jpg" class="img-circle img-sm" alt=""></a>
-                        <div class="media-body">
-                            <span class="media-heading text-semibold">Victoria Baker</span>
-                            <div class="text-size-mini text-muted">
-                                <i class="fal fa-map-marker-alt"></i>
-                                &nbsp;Santa Ana, CA
-                            </div>
+    <!-- Sidebar mobile toggler -->
+    <div class="sidebar-mobile-toggler text-center">
+        <a href="#" class="sidebar-mobile-main-toggle">
+            <i class="fal fa-long-arrow-left"></i>
+        </a>
+        Navigation
+        <a href="#" class="sidebar-mobile-expand">
+            <i class="fad fa-expand"></i>
+            <i class="fad fa-compress"></i>
+        </a>
+    </div>
+    <!-- /sidebar mobile toggler -->
+
+    <!-- Sidebar content -->
+    <div class="sidebar-content">
+
+        <!-- User menu -->
+        <div class="sidebar-user">
+            <div class="card-body">
+                <div class="media">
+                    <div class="mr-3">
+                        <a href="#"><img src="/assets/images/image.png" width="38" height="38" class="rounded-circle" alt=""></a>
+                    </div>
+
+                    <div class="media-body">
+                        <div class="media-title font-weight-semibold">Victoria Baker</div>
+                        <div class="font-size-xs opacity-50">
+                            <i class="fad fa-map-marker-alt fa-fw"></i>
+                            Santa Ana, CA
                         </div>
                     </div>
                 </div>
             </div>
-#}
-            <div class="sidebar-category sidebar-category-visible">
-                <div class="category-content no-padding">
-                    <ul class="navigation navigation-main navigation-accordion">
-
-                        <li {% if 'admin_site' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                            <a href="{#{ path('admin_site_index') }#}">
-                                <i class="fal fa-globe"></i>
-                                <span>Sites</span></a>
-                        </li>
-                        {% if false %}
-                            <li {% if 'admin_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                <a href="#" class="has-ul">
-                                    <i class="fal fa-tools"></i>
-                                    <span>Administration</span>
-                                </a>
-                                <ul {% if not 'admin_user' in app.request.attributes.get('_route') %} class="hidden-ul" {% endif %}>
-                                    <li {% if 'admin_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="#">
-                                            <i class="fal fa-users"></i>
-                                            User
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                        {% if is_granted("ROLE_ROOT") %}
-                            <li {% if 'setting' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                <a href="#" class="has-ul">
-                                    <i class="fal fa-cogs"></i>
-                                    <span>Paramètres</span>
-                                </a>
-                                <ul {% if not 'setting' in app.request.attributes.get('_route') %} class="hidden-ul" {% endif %}>
-                                    <li {% if 'setting_choices' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="{{ path('setting_choices') }}">Choices</a>
-                                    </li>
-                                    <li {% if 'setting_ftp' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="{{ path('setting_ftp') }}">FTP</a>
-                                    </li>
-                                    <li {% if 'setting_mail_layout' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="{{ path('setting_mail_layout') }}">Emails</a>
-                                    </li>
-                                    <li {% if 'setting_mail_new_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="{{ path('setting_mail_new_user') }}">Email new user</a>
-                                    </li>
-                                    <li {% if 'setting_password_forgotten_user' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="{{ path('setting_password_forgotten_user') }}">Email password forgotten</a>
-                                    </li>
-                                    <li {% if 'setting_mail_reset_password' in app.request.attributes.get('_route') %} class="active" {% endif %}>
-                                        <a href="{{ path('setting_mail_reset_password') }}">Email reset password</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        {% endif %}
-
-                    </ul>
-                </div>
-            </div>
-
         </div>
+        <!-- /user menu -->
+
+        <!-- Main navigation -->
+        <div class="card card-sidebar-mobile">
+            <ul class="nav nav-sidebar" data-nav-type="accordion">
+
+                <li class="nav-item">
+                    <a href="{{ path('home') }}" class="nav-link">
+                        <i class="fad fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item nav-item-submenu">
+                    <a href="#" class="nav-link">
+                        <i class="fad fa-cog"></i>
+                        <span>Administration</span></a>
+
+                    <ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+                        <li class="nav-item">
+                            <a href="../seed/layout_nav_horizontal.html" class="nav-link">Horizontal navigation</a>
+                        </li>
+                        <li class="nav-item nav-item-submenu">
+                            <a href="#" class="nav-link">2 sidebars</a>
+                            <ul class="nav nav-group-sub">
+                                <li class="nav-item">
+                                    <a href="../seed/sidebar_secondary.html" class="nav-link">Secondary sidebar</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="../seed/sidebar_right.html" class="nav-link">Right sidebar</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item nav-item-submenu {% if 'setting_' in app.request.attributes.get('_route') %}nav-item-expanded nav-item-open{% endif %}">
+                    <a href="#" class="nav-link">
+                        <i class="fad fa-cogs"></i>
+                        <span>Settings</span></a>
+
+                    <ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+                        <li class="nav-item">
+                            <a href="{{ path('setting_mail') }}" class="nav-link {% if 'setting_mail' in app.request.attributes.get('_route') %}active{% endif %}">Mail</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('setting_map') }}" class="nav-link {% if 'setting_map' in app.request.attributes.get('_route') %}active{% endif %}">Open Street Map / MapBox</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('setting_dropbox') }}" class="nav-link {% if 'setting_dropbox' in app.request.attributes.get('_route') %}active{% endif %}">Dropbox</a>
+                        </li>
+                        <li class="nav-item nav-item-submenu">
+                            <a href="#" class="nav-link">2 sidebars</a>
+                            <ul class="nav nav-group-sub">
+                                <li class="nav-item">
+                                    <a href="../seed/sidebar_secondary.html" class="nav-link">Secondary sidebar</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="../seed/sidebar_right.html" class="nav-link">Right sidebar</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item nav-item-submenu {% if 'tools_' in app.request.attributes.get('_route') %}nav-item-expanded nav-item-open{% endif %}">
+                    <a href="#" class="nav-link">
+                        <i class="fad fa-tools"></i>
+                        <span>Tools</span></a>
+
+                    <ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+                        <li class="nav-item">
+                            <a href="{{ path('tools_history_index') }}" class="nav-link {% if 'tools_history_index' in app.request.attributes.get('_route') %}active{% endif %}">Historique</a>
+                        </li>
+                        <li class="nav-item nav-item-submenu">
+                            <a href="#" class="nav-link">2 sidebars</a>
+                            <ul class="nav nav-group-sub">
+                                <li class="nav-item">
+                                    <a href="../seed/sidebar_secondary.html" class="nav-link">Secondary sidebar</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="../seed/sidebar_right.html" class="nav-link">Right sidebar</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+        <!-- /main navigation -->
+
     </div>
-{% endif %}
+    <!-- /sidebar content -->
+
+</div>

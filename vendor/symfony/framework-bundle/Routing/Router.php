@@ -13,7 +13,6 @@ namespace Symfony\Bundle\FrameworkBundle\Routing;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\FrameworkBundle\DependencyInjection\CompatibilityServiceSubscriberInterface as ServiceSubscriberInterface;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\Config\Resource\FileResource;
@@ -26,6 +25,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Router as BaseRouter;
+use Symfony\Contracts\Service\ServiceSubscriberInterface;
 
 // Help opcache.preload discover always-needed symbols
 class_exists(RedirectableCompiledUrlMatcher::class);
@@ -91,7 +91,7 @@ class Router extends BaseRouter implements WarmableInterface, ServiceSubscriberI
     /**
      * {@inheritdoc}
      */
-    public function warmUp($cacheDir)
+    public function warmUp(string $cacheDir)
     {
         $currentDir = $this->getOption('cache_dir');
 

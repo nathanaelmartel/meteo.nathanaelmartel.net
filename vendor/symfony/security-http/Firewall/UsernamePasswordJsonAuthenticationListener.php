@@ -12,7 +12,6 @@
 namespace Symfony\Component\Security\Http\Firewall;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,12 +41,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  *
- * @final since Symfony 4.3
+ * @final
  */
-class UsernamePasswordJsonAuthenticationListener extends AbstractListener implements ListenerInterface
+class UsernamePasswordJsonAuthenticationListener extends AbstractListener
 {
-    use LegacyListenerTrait;
-
     private $tokenStorage;
     private $authenticationManager;
     private $httpUtils;
@@ -69,13 +66,7 @@ class UsernamePasswordJsonAuthenticationListener extends AbstractListener implem
         $this->successHandler = $successHandler;
         $this->failureHandler = $failureHandler;
         $this->logger = $logger;
-
-        if (null !== $eventDispatcher && class_exists(LegacyEventDispatcherProxy::class)) {
-            $this->eventDispatcher = LegacyEventDispatcherProxy::decorate($eventDispatcher);
-        } else {
-            $this->eventDispatcher = $eventDispatcher;
-        }
-
+        $this->eventDispatcher = $eventDispatcher;
         $this->options = array_merge(['username_path' => 'username', 'password_path' => 'password'], $options);
         $this->propertyAccessor = $propertyAccessor ?: PropertyAccess::createPropertyAccessor();
     }
