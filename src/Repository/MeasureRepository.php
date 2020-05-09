@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Measure;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
 /**
  * @method Measure|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,6 +18,31 @@ class MeasureRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Measure::class);
+    }
+
+    public function getStats(string $type, \DateTime $from, DateTime $to = null)
+    {
+        if (is_null($to)) {
+            $to = new \DateTime();
+        }
+
+        $rsm = new ResultSetMappingBuilder($this->getEntityManager());
+        $rsm->addScalarResult('avg', 'avg');
+        $rsm->addScalarResult('min', 'min');
+        $rsm->addScalarResult('max', 'max');
+
+        $query = $this->getEntityManager()
+            ->createNativeQuery('
+                SELECT avg(value) AS avg, min(value) AS min, max(value) AS max
+                FROM `measure`
+                WHERE type=:type AND measured_at BETWEEN :from AND :to
+                ', $rsm);
+        $results = $query->setParameter(':from', $from->format('Y-m-d H:i:s'))
+            ->setParameter(':to', $to->format('Y-m-d H:i:s'))
+            ->setParameter(':type', $type)
+            ->getResult();
+
+        return $results[0];
     }
 
     // /**

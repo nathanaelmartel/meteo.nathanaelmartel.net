@@ -1,20 +1,45 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello DefaultController!{% endblock %}
+{% block title %}Station météo{% endblock %}
+
+{% block breadcrumbitems %}
+    <span class="breadcrumb-item active">Dernières 24h</span>
+{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+    <div class="card card-body">
+        <div class="row text-center">
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-thermometer-half fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ hourly_stats.avg|number_format('2', ',', ' ')}}°C</h5>
+                <span class="text-muted font-size-sm">Dernière heure</span>
+            </div>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-thermometer-full fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ daily_stats.max|number_format('2', ',', ' ')}}°C</h5>
+                <span class="text-muted font-size-sm">Max</span>
+            </div>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code><a href="{{ '/home/nat/Documents/Ressources/Symfony/simplement_web/src/Controller/DefaultController.php'|file_link(0) }}">src/Controller/DefaultController.php</a></code></li>
-        <li>Your template at <code><a href="{{ '/home/nat/Documents/Ressources/Symfony/simplement_web/templates/default/index.html.twig'|file_link(0) }}">templates/default/index.html.twig</a></code></li>
-    </ul>
-</div>
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-thermometer-empty fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ daily_stats.min|number_format('2', ',', ' ')}}°C</h5>
+                <span class="text-muted font-size-sm">Min</span>
+            </div>
+
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-clock fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ last_temperature|date('d/m/Y H:i') }}</h5>
+                <span class="text-muted font-size-sm">Dernier relevé</span>
+            </div>
+        </div>
+    </div>
 {% endblock %}

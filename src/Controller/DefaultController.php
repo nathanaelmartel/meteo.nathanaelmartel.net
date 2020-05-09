@@ -5,24 +5,20 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use App\SimplementWeb\SettingsBundle\Service\Setting;
-use App\SimplementWeb\HistoryBundle\Service\History;
 
 class DefaultController extends AbstractController
 {
     /**
      * @Route("/", name="home")
      */
-    public function index(Setting $setting, History $history)
+    public function index(Setting $setting)
     {
-        /*$setting->get('key');
-        $setting->set('key', 'value');
-        $setting->group('key');*/
-
-        //$h = $history->add('Test', null, 'information', ['foo' => 'bar']);
-        //$history->add('Beta', $h, 'information', ['foo' => 'bar']);
+        $em = $this->getDoctrine()->getManager();
 
         return $this->render('default/index.html.twig', [
-            'controller_name' => 'DefaultController',
+            'last_temperature' => new \DateTime($setting->get('last_temperature')),
+            'daily_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 day')),
+            'hourly_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 hour')),
         ]);
     }
 }
