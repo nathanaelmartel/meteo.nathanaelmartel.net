@@ -25,7 +25,7 @@ class History
                 'object_type' => $object_type,
                 'object_id' => $object->getId(),
             ],
-            ['updated' => 'DESC'],
+            ['updated' => 'DESC']
         );
     }
 
@@ -34,7 +34,7 @@ class History
         return $this->entityManager->getRepository('History:history')->findBy([
                 'user_id' => $user_id,
             ],
-            ['updated' => 'DESC'],
+            ['updated' => 'DESC']
         );
     }
 
