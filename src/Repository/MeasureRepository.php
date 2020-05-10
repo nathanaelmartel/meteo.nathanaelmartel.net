@@ -88,6 +88,27 @@ class MeasureRepository extends ServiceEntityRepository
         return $graph;
     }
 
+    public function findLastReleveOfType(string $type, \DateTime $before = null)
+    {
+        if (is_null($before)) {
+            $before = new \DateTime();
+        }
+
+        $results = $this->createQueryBuilder('m')
+            ->andWhere('m.type = :type')
+            ->andWhere('m.measured_at < :before')
+            ->andWhere('m.releve IS NOT NULL')
+            ->setParameter('type', $type)
+            ->setParameter('before', $before->format('Y-m-d H:i:s'))
+            ->orderBy('m.measured_at', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult()
+        ;
+
+        return $results[0];
+    }
+
     // /**
     //  * @return Measure[] Returns an array of Measure objects
     //  */

@@ -36,6 +36,11 @@ class Measure
      */
     private $stated_at;
 
+    /**
+     * @ORM\Column(type="float", nullable=true)
+     */
+    private $releve;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -85,6 +90,18 @@ class Measure
     public function setStatedAt(?\DateTimeInterface $stated_at): self
     {
         $this->stated_at = $stated_at;
+
+        return $this;
+    }
+
+    public function getReleve(): ?float
+    {
+        return $this->releve;
+    }
+
+    public function setReleve(?float $releve): self
+    {
+        $this->releve = $releve;
 
         return $this;
     }

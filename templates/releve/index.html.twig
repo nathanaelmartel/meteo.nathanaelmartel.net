@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Relevé{% endblock %}
+
+{% block body %}
+    <div class="card card-body">
+        {{ form_start(form) }}
+        {{ form_widget(form) }}
+
+        <div class="text-right">
+            <input type="submit" class="btn btn-success" value="Sauvegarder"/>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
