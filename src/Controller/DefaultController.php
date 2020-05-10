@@ -19,6 +19,7 @@ class DefaultController extends AbstractController
             'last_temperature' => new \DateTime($setting->get('last_temperature')),
             'daily_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 day')),
             'hourly_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 hour')),
+            'graph' => $em->getRepository('App:Measure')->getHourlyStats('temperature', new \DateTime('-1 day')),
         ]);
     }
 }

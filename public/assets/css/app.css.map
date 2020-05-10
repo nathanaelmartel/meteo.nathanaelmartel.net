@@ -1,6 +1,6 @@
 {
 "version": 3,
-"mappings": "AAAA,kCAAqC,CACjC,OAAO,CAAE,OAAO,CAGpB,uBAAwB,CACpB,OAAO,CAAE,OAAO,CCHpB,SACK,CACD,WAAW,CAAE,MAAM",
+"mappings": "AAAA,kCAAqC,CACjC,OAAO,CAAE,OAAO,CAGpB,uBAAwB,CACpB,OAAO,CAAE,OAAO,CCFpB,SACK,CACD,WAAW,CAAE,MAAM,CAEnB,oBAAoB,CAAC,QAAQ,CAC7B,sBAAsB,CAAC,IAAI",
 "sources": ["../../../templates/scss/_fontawesomepro.scss","../../../templates/scss/app.scss"],
 "names": [],
 "file": "app.css"

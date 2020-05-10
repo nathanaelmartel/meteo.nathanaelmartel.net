@@ -74,8 +74,8 @@ $enable-sweetalert: false !default; //** Sliders
 $enable-noui: false !default;
 $enable-ion: false !default; //** Charts
 $enable-charts: false !default;
-$enable-d3: false !default;
-$enable-c3: false !default; //** Maps
+$enable-d3: true !default;
+$enable-c3: true !default; //** Maps
 $enable-google-maps: false !default;
 $enable-vector-maps: false !default; //** jQuery UI
 $enable-jqueryui: false !default;

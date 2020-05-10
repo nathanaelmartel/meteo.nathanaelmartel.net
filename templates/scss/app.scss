@@ -1,7 +1,10 @@
 @import "fontawesomepro";
+$cuivre: #b36205;
 
 body,
 html {
     font-family: ubuntu;
     //font-size: 100%;
+    --fa-secondary-color: #b36205;
+    --fa-secondary-opacity: 0.8;
 }

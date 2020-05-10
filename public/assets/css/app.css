@@ -1,2 +1,2 @@
-.nav-item-submenu>.nav-link::after{content:'\f105'}.dropdown-toggle::after{content:'\f107'}body,html{font-family:ubuntu}
+.nav-item-submenu>.nav-link::after{content:'\f105'}.dropdown-toggle::after{content:'\f107'}body,html{font-family:ubuntu;--fa-secondary-color: #b36205;--fa-secondary-opacity: 0.8}
 /*# sourceMappingURL=app.css.map */
