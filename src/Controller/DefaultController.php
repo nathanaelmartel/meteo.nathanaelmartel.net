@@ -25,6 +25,7 @@ class DefaultController extends AbstractController
             'hourly_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 hour')),
             'graphiques' => $graphiques,
             'breadcrumb' => 'Dernières 24h',
+            'last_stat' => 'Dernière heure',
         ]);
     }
 
@@ -45,6 +46,7 @@ class DefaultController extends AbstractController
             'hourly_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 day')),
             'graphiques' => $graphiques,
             'breadcrumb' => '30 derniers jours',
+            'last_stat' => 'Dernier jour',
         ]);
     }
 }

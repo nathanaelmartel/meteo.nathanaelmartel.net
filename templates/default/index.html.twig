@@ -3,7 +3,7 @@
 {% block title %}Station météo{% endblock %}
 
 {% block breadcrumbitems %}
-    <span class="breadcrumb-item active">Dernières 24h</span>
+    <span class="breadcrumb-item active">{{ breadcrumb }}</span>
 {% endblock %}
 
 {% block body %}
@@ -14,7 +14,7 @@
                     <i class="fad fa-thermometer-half fa-2x"></i>
                 </p>
                 <h5 class="font-weight-semibold mb-0">{{ hourly_stats.avg|number_format('2', ',', ' ')}}°C</h5>
-                <span class="text-muted font-size-sm">Dernière heure</span>
+                <span class="text-muted font-size-sm">{{ last_stat }}</span>
             </div>
 
             <div class="col-3">
