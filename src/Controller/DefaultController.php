@@ -15,11 +15,15 @@ class DefaultController extends AbstractController
     {
         $em = $this->getDoctrine()->getManager();
 
+        foreach (['temperature', 'humidity', 'pressure'] as $type) {
+            $graphiques[$type] = $em->getRepository('App:Measure')->getHourlyStats($type, new \DateTime('-1 day'));
+        }
+
         return $this->render('default/index.html.twig', [
             'last_temperature' => new \DateTime($setting->get('last_temperature')),
             'daily_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 day')),
             'hourly_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 hour')),
-            'graph' => $em->getRepository('App:Measure')->getHourlyStats('temperature', new \DateTime('-1 day')),
+            'graphiques' => $graphiques,
         ]);
     }
 }

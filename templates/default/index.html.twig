@@ -43,63 +43,50 @@
         </div>
     </div>
 
-    <div class="card card-body">
-        <div class="chart-container">
-            <div class="chart" id="temperature"></div>
+    {% for type, graphique in graphiques %}
+        <div class="card card-body">
+            <div class="chart-container">
+                <div class="chart" id="{{ type }}"></div>
+            </div>
         </div>
-    </div>
+    {% endfor %}
 {% endblock %}
 
 {% block javascripts %}
     {{parent()}}
-    {% if graph != '' %}
+    {% if graphiques | length > 0 %}
         <script type="text/javascript" src="/assets/js/plugins/visualization/d3/d3.min.js"></script>
         <script type="text/javascript" src="/assets/js/plugins/visualization/c3/c3.min.js"></script>
-        <script>
-            var line_chart = c3.generate({
-                bindto: '#temperature',
-                point: {
-                    r: 4
-                },
-                size: {
-                    height: 400
-                },
-                color: {
-                    pattern: [
-                        '#b36205',
-                        '#009688',
-                        '#F4511E',
-                        '#1E88E5',
-                        '#FF9800',
-                        '#8BC34A',
-                        '#03A9F4',
-                        '#3F51B5',
-                        '#673AB7',
-                        '#9C27B0',
-                        '#E91E63',
-                        '#777777',
-                        '#795548',
-                        '#607D8B'
-                    ]
-                },
-                axis: {
-                    x: {
-                        type: 'category',
-                        categories: {{ graph.hour|json_encode|raw }}
+        {% for type, graphique in graphiques %}
+            <script>
+                var line_chart = c3.generate({
+                    bindto: '#{{ type }}',
+                    point: {
+                        r: 4
+                    },
+                    size: {
+                        height: 400
+                    },
+                    color: {
+                        pattern: ['#b36205']
+                    },
+                    axis: {
+                        x: {
+                            type: 'category',
+                            categories: {{ graphique.hour|json_encode|raw }}
+                        }
+                    },
+                    data: {
+                        columns: [{{ graphique.avg|json_encode|raw }}],
+                        type: 'spline'
+                    },
+                    grid: {
+                        y: {
+                            show: true
+                        }
                     }
-                },
-                data: {
-                    columns: [
-                        {{ graph.avg|json_encode|raw }}, {{ graph.min|json_encode|raw }}, {{ graph.max|json_encode|raw }}
-                    ],
-                    type: 'spline'
-                },
-                grid: {
-                    y: {
-                        show: true
-                    }
-                }
-            });
-        </script>
+                });
+            </script>
+        {% endfor %}
     {% endif %}
 {% endblock %}

@@ -51,6 +51,16 @@ class MeasureRepository extends ServiceEntityRepository
             $to = new \DateTime();
         }
 
+        $labels = [
+            'temperature' => 'Température °C',
+            'humidity' => 'Humidité %',
+            'pressure' => 'Pression Pa',
+        ];
+        $label = $type;
+        if (isset($labels[$type])) {
+            $label = $labels[$type];
+        }
+
         $rsm = new ResultSetMappingBuilder($this->getEntityManager());
         $rsm->addScalarResult('hour', 'hour');
         $rsm->addScalarResult('avg', 'avg');
@@ -71,7 +81,7 @@ class MeasureRepository extends ServiceEntityRepository
 
         $graph = [
             'hour' => [],
-            'avg' => ['avg'],
+            'avg' => [$label],
             'min' => ['min'],
             'max' => ['max'],
         ];
@@ -108,33 +118,4 @@ class MeasureRepository extends ServiceEntityRepository
 
         return $results[0];
     }
-
-    // /**
-    //  * @return Measure[] Returns an array of Measure objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('m')
-            ->andWhere('m.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('m.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Measure
-    {
-        return $this->createQueryBuilder('m')
-            ->andWhere('m.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }
