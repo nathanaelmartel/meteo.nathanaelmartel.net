@@ -47,6 +47,16 @@ class MeasureRepository extends ServiceEntityRepository
 
     public function getHourlyStats(string $type, \DateTime $from, \DateTime $to = null)
     {
+        return $this->getStatsBy($type, $from, $to, 13);
+    }
+
+    public function getDailyStats(string $type, \DateTime $from, \DateTime $to = null)
+    {
+        return $this->getStatsBy($type, $from, $to, 10);
+    }
+
+    public function getStatsBy(string $type, \DateTime $from, \DateTime $to = null, $period = 13)
+    {
         if (is_null($to)) {
             $to = new \DateTime();
         }
@@ -62,33 +72,37 @@ class MeasureRepository extends ServiceEntityRepository
         }
 
         $rsm = new ResultSetMappingBuilder($this->getEntityManager());
-        $rsm->addScalarResult('hour', 'hour');
+        $rsm->addScalarResult('period', 'period');
         $rsm->addScalarResult('avg', 'avg');
         $rsm->addScalarResult('min', 'min');
         $rsm->addScalarResult('max', 'max');
 
         $query = $this->getEntityManager()
             ->createNativeQuery('
-                SELECT LEFT(measured_at, 13) AS hour, avg(value) AS avg, min(value) AS min, max(value) AS max
+                SELECT LEFT(measured_at, :period) AS period, avg(value) AS avg, min(value) AS min, max(value) AS max
                 FROM `measure`
                 WHERE type=:type AND measured_at BETWEEN :from AND :to
-                GROUP BY LEFT(measured_at, 13)
+                GROUP BY LEFT(measured_at, :period)
                 ', $rsm);
         $results = $query->setParameter(':from', $from->format('Y-m-d H:i:s'))
             ->setParameter(':to', $to->format('Y-m-d H:i:s'))
             ->setParameter(':type', $type)
+            ->setParameter(':period', $period)
             ->getResult();
 
         $graph = [
-            'hour' => [],
+            'period' => [],
             'avg' => [$label],
             'min' => ['min'],
             'max' => ['max'],
         ];
         foreach ($results as $result) {
             foreach ($result as $key => $value) {
-                if ('hour' == $key) {
+                if (('period' == $key) && (13 == $period)) {
                     $graph[$key][] = substr($value, -2).'h';
+                } elseif (('period' == $key) && (10 == $period)) {
+                    $date = new \DateTime($value);
+                    $graph[$key][] = $date->format('d/m');
                 } else {
                     $graph[$key][] = round($value, 2);
                 }
