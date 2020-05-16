@@ -65,6 +65,7 @@ class MeasureRepository extends ServiceEntityRepository
             'temperature' => 'Température °C',
             'humidity' => 'Humidité %',
             'pressure' => 'Pression Pa',
+            'panneau-solaire' => 'Production banneau solaire KWh',
         ];
         $label = $type;
         if (isset($labels[$type])) {

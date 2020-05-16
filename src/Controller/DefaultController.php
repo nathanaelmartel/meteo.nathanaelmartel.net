@@ -36,15 +36,18 @@ class DefaultController extends AbstractController
     {
         $em = $this->getDoctrine()->getManager();
 
-        foreach (['temperature', 'humidity', 'pressure'] as $type) {
+        $types = ['panneau-solaire' => 'bar'];
+
+        foreach (['temperature', 'humidity', 'panneau-solaire', 'pressure'] as $type) {
             $graphiques[$type] = $em->getRepository('App:Measure')->getDailyStats($type, new \DateTime('-30 days'));
         }
 
-        return $this->render('default/index.html.twig', [
+        return $this->render('default/lastmonth.html.twig', [
             'last_temperature' => new \DateTime($setting->get('last_temperature')),
             'daily_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-30 day')),
             'hourly_stats' => $em->getRepository('App:Measure')->getStats('temperature', new \DateTime('-1 day')),
             'graphiques' => $graphiques,
+            'types' => $types,
             'breadcrumb' => '30 derniers jours',
             'last_stat' => 'Dernier jour',
         ]);

@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Station météo{% endblock %}
+
+{% block breadcrumbitems %}
+    <span class="breadcrumb-item active">{{ breadcrumb }}</span>
+{% endblock %}
+
+{% block body %}
+    <div class="card card-body">
+        <div class="row text-center">
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-thermometer-half fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ hourly_stats.avg|number_format('2', ',', ' ')}}°C</h5>
+                <span class="text-muted font-size-sm">{{ last_stat }}</span>
+            </div>
+
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-thermometer-full fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ daily_stats.max|number_format('2', ',', ' ')}}°C</h5>
+                <span class="text-muted font-size-sm">Max</span>
+            </div>
+
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-thermometer-empty fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ daily_stats.min|number_format('2', ',', ' ')}}°C</h5>
+                <span class="text-muted font-size-sm">Min</span>
+            </div>
+
+            <div class="col-3">
+                <p>
+                    <i class="fad fa-clock fa-2x"></i>
+                </p>
+                <h5 class="font-weight-semibold mb-0">{{ last_temperature|date('d/m/Y H:i') }}</h5>
+                <span class="text-muted font-size-sm">Dernier relevé</span>
+            </div>
+        </div>
+    </div>
+
+    {% for type, graphique in graphiques %}
+        <div class="card card-body">
+            <h5 class="card-title">{{ graphique.avg[0] }}</h5>
+            <div class="chart-container">
+                <div class="chart" id="{{ type }}"></div>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block javascripts %}
+    {{parent()}}
+    {% if graphiques | length > 0 %}
+        <script type="text/javascript" src="/assets/js/plugins/visualization/d3/d3.min.js"></script>
+        <script type="text/javascript" src="/assets/js/plugins/visualization/c3/c3.min.js"></script>
+        {% for type, graphique in graphiques %}
+            <script>
+                var line_chart = c3.generate({
+                    bindto: '#{{ type }}',
+                    point: {
+                        r: 4
+                    },
+                    size: {
+                        height: 400
+                    },
+                    color: {
+                        pattern: ['#b36205', '#62b305']
+                    },
+                    axis: {
+                        x: {
+                            type: 'category',
+                            categories: {{ graphique.period|json_encode|raw }}
+                        }
+                    },
+                    data: {
+                        {% if types[type] is defined %}
+                            columns: [{{ graphique.avg|json_encode|raw }}],
+                            type: '{{ types[type] }}'
+                        {% else %}
+                            columns: [
+                                {{ graphique.max|json_encode|raw }}, {{ graphique.min|json_encode|raw }}
+                            ],
+                            type: 'spline'
+                        {% endif %}
+                    },
+                    grid: {
+                        y: {
+                            show: true
+                        }
+                    }
+                });
+            </script>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
