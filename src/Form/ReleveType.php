@@ -14,9 +14,9 @@ class ReleveType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $types = [
-            'Ilek (hc)' => 'electricite-ilek-heures-creuses',
+            /*'Ilek (hc)' => 'electricite-ilek-heures-creuses',
             'Ilek (hp)' => 'electricite-ilek-heures-pleines',
-            'Ilek (gaz)' => 'gaz-ilek',
+            'Ilek (gaz)' => 'gaz-ilek',*/
             'Panneau Solaire' => 'panneau-solaire',
         ];
 

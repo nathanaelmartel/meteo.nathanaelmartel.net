@@ -33,6 +33,10 @@ class ReleveController extends AbstractController
             $nb_days = $nb_days->format('%a');
             $measure_value = $measure_total / $nb_days;
 
+            $lastMesure->setValue($measure_value);
+            $em->persist($lastMesure);
+            $em->flush();
+
             while ($day < $measure->getStatedAt()) {
                 $measure_intermedaire = new Measure();
                 $measure_intermedaire->setValue($measure_value);
@@ -45,15 +49,17 @@ class ReleveController extends AbstractController
                 $day->modify('+1 day');
             }
 
-            $measure->setValue($measure_value);
+            $measure->setValue(0);
             $measure->setMeasuredAt($measure->getStatedAt());
 
             $em->persist($measure);
             $em->flush();
 
-            $this->addFlash('success', 'Mesure enregistré');
+            $this->addFlash('success', 'Relève enregistré');
 
-            return $this->redirectToRoute('home');
+            $this->addFlash('info', sprintf('%s kWH depuis la dernière relève, soit %s kWH / jour.', $measure_total, $measure_value));
+
+            return $this->redirectToRoute('last_month');
         }
 
         return $this->render('releve/index.html.twig', [
