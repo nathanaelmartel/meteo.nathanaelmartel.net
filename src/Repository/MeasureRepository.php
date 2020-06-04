@@ -47,7 +47,41 @@ class MeasureRepository extends ServiceEntityRepository
 
     public function getHourlyStats(string $type, \DateTime $from, \DateTime $to = null)
     {
+        if (is_null($to)) {
+            $to = new \DateTime();
+        }
+
         return $this->getStatsBy($type, $from, $to, 13);
+        $keys = array_flip($measures['period']);
+        $datas = [
+            'period' => [],
+            'avg' => [$measures['avg'][0]],
+            'min' => ['min'],
+            'max' => ['max'],
+        ];
+        array_shift($measures['avg']);
+        array_shift($measures['min']);
+        array_shift($measures['max']);
+
+        $hour = clone $from;
+        while ($hour < $to) {
+            $formated_hour = $hour->format('H').'h';
+            if (isset($keys[$formated_hour])) {
+                $datas['period'][] = $formated_hour;
+                $datas['avg'][] = $measures['avg'][$keys[$formated_hour]];
+                $datas['min'][] = $measures['min'][$keys[$formated_hour]];
+                $datas['max'][] = $measures['max'][$keys[$formated_hour]];
+            } else {
+                $datas['period'][] = $formated_hour;
+                $datas['avg'][] = null;
+                $datas['min'][] = null;
+                $datas['max'][] = null;
+            }
+
+            $hour->modify('+1 hour');
+        }
+
+        return $datas;
     }
 
     public function getDailyStats(string $type, \DateTime $from, \DateTime $to = null)
@@ -90,27 +124,64 @@ class MeasureRepository extends ServiceEntityRepository
             ->setParameter(':type', $type)
             ->setParameter(':period', $period)
             ->getResult();
+        /*
+                foreach ($results as $result) {
+                    foreach ($result as $key => $value) {
+                        if (('period' == $key) && (13 == $period)) {
+                            $graph[$key][] = substr($value, -2).'h';
+                        } elseif (('period' == $key) && (10 == $period)) {
+                            $date = new \DateTime($value);
+                            $graph[$key][] = $date->format('d/m');
+                        } else {
+                            $graph[$key][] = round($value, 2);
+                        }
+                    }
+                }*/
 
-        $graph = [
+        $datas = [
             'period' => [],
             'avg' => [$label],
             'min' => ['min'],
             'max' => ['max'],
         ];
-        foreach ($results as $result) {
-            foreach ($result as $key => $value) {
-                if (('period' == $key) && (13 == $period)) {
-                    $graph[$key][] = substr($value, -2).'h';
-                } elseif (('period' == $key) && (10 == $period)) {
-                    $date = new \DateTime($value);
-                    $graph[$key][] = $date->format('d/m');
-                } else {
-                    $graph[$key][] = round($value, 2);
+        $time_period = clone $from;
+        while ($time_period < $to) {
+            $period_key = '';
+            if (13 == $period) {
+                $formated_hour = $time_period->format('H').'h';
+                if (isset($results[0])) {
+                    $period_key = substr($results[0]['period'], -2).'h';
                 }
+            } else {
+                $formated_hour = $time_period->format('d/m');
+                if (isset($results[0])) {
+                    $date = new \DateTime($results[0]['period']);
+                    $period_key = $date->format('d/m');
+                }
+            }
+            if ($period_key == $formated_hour) {
+                $datas['period'][] = $formated_hour;
+                foreach ($results[0] as $key => $value) {
+                    if ('period' != $key) {
+                        $datas[$key][] = $value;
+                    }
+                }
+                array_shift($results);
+            } else {
+                $datas['period'][] = $formated_hour;
+                $datas['avg'][] = null;
+                $datas['min'][] = null;
+                $datas['max'][] = null;
+            }
+
+            if (13 == $period) {
+                $time_period->modify('+1 hour');
+            } else {
+                $time_period->modify('+1 day');
             }
         }
 
-        return $graph;
+        return $datas;
     }
 
     public function findLastReleveOfType(string $type, \DateTime $before = null)
