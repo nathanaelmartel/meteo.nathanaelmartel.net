@@ -10,11 +10,10 @@ use App\SimplementWeb\SettingsBundle\Service\Setting;
 
 class ApiController extends AbstractController
 {
-
     /**
      * @Route("/api/{measure}/{value}", name="api_measure")
      */
-    public function temperature(string $measure, string $value, Setting $setting)
+    public function measure(string $measure, string $value, Setting $setting)
     {
         $Measure = $this->addMeasure($measure, $value);
         $setting->set(sprintf('last_%s', $measure), date('Y-m-d H:i:s'));

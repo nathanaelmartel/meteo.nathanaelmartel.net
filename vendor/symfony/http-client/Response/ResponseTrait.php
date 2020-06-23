@@ -137,7 +137,7 @@ trait ResponseTrait
     public function toArray(bool $throw = true): array
     {
         if ('' === $content = $this->getContent($throw)) {
-            throw new TransportException('Response body is empty.');
+            throw new JsonException('Response body is empty.');
         }
 
         if (null !== $this->jsonData) {
@@ -153,11 +153,11 @@ trait ResponseTrait
         try {
             $content = json_decode($content, true, 512, JSON_BIGINT_AS_STRING | (\PHP_VERSION_ID >= 70300 ? JSON_THROW_ON_ERROR : 0));
         } catch (\JsonException $e) {
-            throw new JsonException(sprintf($e->getMessage().' for "%s".', $this->getInfo('url')), $e->getCode());
+            throw new JsonException($e->getMessage().sprintf(' for "%s".', $this->getInfo('url')), $e->getCode());
         }
 
         if (\PHP_VERSION_ID < 70300 && JSON_ERROR_NONE !== json_last_error()) {
-            throw new JsonException(sprintf(json_last_error_msg().' for "%s".', $this->getInfo('url')), json_last_error());
+            throw new JsonException(json_last_error_msg().sprintf(' for "%s".', $this->getInfo('url')), json_last_error());
         }
 
         if (!\is_array($content)) {
@@ -253,7 +253,7 @@ trait ResponseTrait
     private static function addResponseHeaders(array $responseHeaders, array &$info, array &$headers, string &$debug = ''): void
     {
         foreach ($responseHeaders as $h) {
-            if (11 <= \strlen($h) && '/' === $h[4] && preg_match('#^HTTP/\d+(?:\.\d+)? ([12345]\d\d)(?: |$)#', $h, $m)) {
+            if (11 <= \strlen($h) && '/' === $h[4] && preg_match('#^HTTP/\d+(?:\.\d+)? ([1-9]\d\d)(?: |$)#', $h, $m)) {
                 if ($headers) {
                     $debug .= "< \r\n";
                     $headers = [];
@@ -316,7 +316,7 @@ trait ResponseTrait
         }
 
         $lastActivity = microtime(true);
-        $isTimeout = false;
+        $enlapsedTimeout = 0;
 
         while (true) {
             $hasActivity = false;
@@ -338,7 +338,7 @@ trait ResponseTrait
                     } elseif (!isset($multi->openHandles[$j])) {
                         unset($responses[$j]);
                         continue;
-                    } elseif ($isTimeout) {
+                    } elseif ($enlapsedTimeout >= $timeoutMax) {
                         $multi->handlesActivity[$j] = [new ErrorChunk($response->offset, sprintf('Idle timeout reached for "%s".', $response->getInfo('url')))];
                     } else {
                         continue;
@@ -346,7 +346,7 @@ trait ResponseTrait
 
                     while ($multi->handlesActivity[$j] ?? false) {
                         $hasActivity = true;
-                        $isTimeout = false;
+                        $enlapsedTimeout = 0;
 
                         if (\is_string($chunk = array_shift($multi->handlesActivity[$j]))) {
                             if (null !== $response->inflate && false === $chunk = @inflate_add($response->inflate, $chunk)) {
@@ -359,8 +359,9 @@ trait ResponseTrait
                                 continue;
                             }
 
-                            $response->offset += \strlen($chunk);
+                            $chunkLen = \strlen($chunk);
                             $chunk = new DataChunk($response->offset, $chunk);
+                            $response->offset += $chunkLen;
                         } elseif (null === $chunk) {
                             $e = $multi->handlesActivity[$j][0];
                             unset($responses[$j], $multi->handlesActivity[$j]);
@@ -379,7 +380,7 @@ trait ResponseTrait
                             }
                         } elseif ($chunk instanceof ErrorChunk) {
                             unset($responses[$j]);
-                            $isTimeout = true;
+                            $enlapsedTimeout = $timeoutMax;
                         } elseif ($chunk instanceof FirstChunk) {
                             if ($response->logger) {
                                 $info = $response->getInfo();
@@ -447,10 +448,11 @@ trait ResponseTrait
                 continue;
             }
 
-            switch (self::select($multi, $timeoutMin)) {
-                case -1: usleep(min(500, 1E6 * $timeoutMin)); break;
-                case 0: $isTimeout = microtime(true) - $lastActivity > $timeoutMax; break;
+            if (-1 === self::select($multi, min($timeoutMin, $timeoutMax - $enlapsedTimeout))) {
+                usleep(min(500, 1E6 * $timeoutMin));
             }
+
+            $enlapsedTimeout = microtime(true) - $lastActivity;
         }
     }
 }

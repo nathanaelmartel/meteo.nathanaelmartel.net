@@ -1,3 +1,14 @@
+1.19
+====
+
+* Added "email verification/confirmation" option to `make:registration-form` - see #603
+  thanks to @jrushlow!
+
+1.18
+====
+
+* Reverted support for `doctrine/inflector` 2.0 - #611 thanks to @weaverryan
+
 1.17
 ====
 

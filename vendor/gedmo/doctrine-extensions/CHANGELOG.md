@@ -20,6 +20,16 @@ a release.
 
 ## [Unreleased]
 
+## [2.4.41] - 2020-05-10
+### Sluggable
+#### Fixed
+- Remove PHPDoc samples as they are interpreted by Annotation Reader (#2120)
+
+## [2.4.40] - 2020-04-27
+### SoftDeleteable
+#### Fixed
+- Invalidate query cache when toggling filter on/off for an entity (#2112)
+
 ## [2.4.39] - 2020-01-18
 ### Tree
 ### Fixed
