@@ -23,10 +23,7 @@ var_dump($version); // 1.0.0@0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33
 composer require ocramius/package-versions
 ```
 
-It is suggested that you use a optimized composer autoloader in order to prevent
-autoload I/O when accessing the `PackageVersions\Versions` API:
-
-Therefore you should use `optimize-autoloader: true` in your composer.json:
+It is suggested that you use [an optimized composer autoloader](https://getcomposer.org/doc/06-config.md#optimize-autoloader) (to prevent autoload I/O when accessing the `PackageVersions\Versions` API) in your composer.json:
 ```
 ...
     "config": {
@@ -34,7 +31,6 @@ Therefore you should use `optimize-autoloader: true` in your composer.json:
     },
 ...
 ```
-see https://getcomposer.org/doc/06-config.md#optimize-autoloader
 
 In case you manually generate your autoloader via the CLI use the `--optimize` flag:
 
@@ -52,9 +48,11 @@ This is especially useful when you want to generate assets/code/artifacts that a
 the current version of a certain dependency. Doing so at runtime by checking the installed
 version of a package would be too expensive, and this package mitigates that.
 
-## Professional Support
+## ocramius/package-versions for enterprise
 
-[Professionally supported `ocramius/package-versions` is available through Tidelift](https://tidelift.com/subscription/pkg/packagist-ocramius-package-versions?utm_source=packagist-ocramius-package-versions&utm_medium=referral&utm_campaign=readme).
+Available as part of the Tidelift Subscription.
+
+The maintainer of ocramius/package-versions and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/packagist-ocramius-package-versions?utm_source=packagist-ocramius-package-versions&utm_medium=referral&utm_campaign=enterprise&utm_term=repo).
 
 You can also contact the maintainer at ocramius@gmail.com for looking into issues related to this package
 in your private projects.

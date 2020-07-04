@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace ProxyManager\Exception;
 
 use BadMethodCallException;
+use function sprintf;
 
 /**
  * Exception for forcefully disabled methods
- *
- * @author Marco Pivetta <ocramius@gmail.com>
- * @license MIT
  */
 class DisabledMethodException extends BadMethodCallException implements ExceptionInterface
 {
-    const NAME = __CLASS__;
+    public const NAME = self::class;
 
     public static function disabledMethod(string $method) : self
     {

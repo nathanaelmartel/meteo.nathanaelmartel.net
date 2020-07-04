@@ -9,25 +9,12 @@ use ProxyManager\Inflector\Util\ParameterHasher;
 
 /**
  * {@inheritDoc}
- *
- * @author Marco Pivetta <ocramius@gmail.com>
- * @license MIT
  */
 final class SignatureGenerator implements SignatureGeneratorInterface
 {
-    /**
-     * @var ParameterEncoder
-     */
-    private $parameterEncoder;
+    private ParameterEncoder $parameterEncoder;
+    private ParameterHasher $parameterHasher;
 
-    /**
-     * @var ParameterHasher
-     */
-    private $parameterHasher;
-
-    /**
-     * Constructor.
-     */
     public function __construct()
     {
         $this->parameterEncoder = new ParameterEncoder();

@@ -9,9 +9,6 @@ use ReflectionMethod;
 
 /**
  * Internal utility class - allows fetching a method from a given class, if it exists
- *
- * @author Marco Pivetta <ocramius@gmail.com>
- * @license MIT
  */
 final class GetMethodIfExists
 {

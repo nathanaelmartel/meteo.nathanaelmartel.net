@@ -262,7 +262,7 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
             array_unshift($attributes, $mapping->getTypeProperty());
         }
 
-        if ($context['cache_key']) {
+        if ($context['cache_key'] && \stdClass::class !== $class) {
             $this->attributesCache[$key] = $attributes;
         }
 
@@ -442,7 +442,7 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
             return $data;
         }
 
-        throw new NotNormalizableValueException(sprintf('The type of the "%s" attribute for class "%s" must be one of "%s" ("%s" given).', $attribute, $currentClass, implode('", "', array_keys($expectedTypes)), \gettype($data)));
+        throw new NotNormalizableValueException(sprintf('The type of the "%s" attribute for class "%s" must be one of "%s" ("%s" given).', $attribute, $currentClass, implode('", "', array_keys($expectedTypes)), get_debug_type($data)));
     }
 
     /**

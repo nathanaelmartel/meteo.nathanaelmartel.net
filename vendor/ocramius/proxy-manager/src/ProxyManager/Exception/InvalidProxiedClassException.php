@@ -7,12 +7,13 @@ namespace ProxyManager\Exception;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
+use function array_filter;
+use function array_map;
+use function implode;
+use function sprintf;
 
 /**
  * Exception for invalid proxied classes
- *
- * @author Marco Pivetta <ocramius@gmail.com>
- * @license MIT
  */
 class InvalidProxiedClassException extends InvalidArgumentException implements ExceptionInterface
 {
@@ -34,12 +35,12 @@ class InvalidProxiedClassException extends InvalidArgumentException implements E
             implode(
                 "\n",
                 array_map(
-                    function (ReflectionMethod $reflectionMethod) : string {
+                    static function (ReflectionMethod $reflectionMethod) : string {
                         return $reflectionMethod->getDeclaringClass()->getName() . '::' . $reflectionMethod->getName();
                     },
                     array_filter(
                         $reflection->getMethods(),
-                        function (ReflectionMethod $method) : bool {
+                        static function (ReflectionMethod $method) : bool {
                             return $method->isAbstract() && $method->isProtected();
                         }
                     )

@@ -17,56 +17,23 @@ use ProxyManager\Signature\SignatureChecker;
 use ProxyManager\Signature\SignatureCheckerInterface;
 use ProxyManager\Signature\SignatureGenerator;
 use ProxyManager\Signature\SignatureGeneratorInterface;
+use function sys_get_temp_dir;
 
 /**
  * Base configuration class for the proxy manager - serves as micro disposable DIC/facade
- *
- * @author Marco Pivetta <ocramius@gmail.com>
- * @license MIT
  */
 class Configuration
 {
-    const DEFAULT_PROXY_NAMESPACE = 'ProxyManagerGeneratedProxy';
+    public const DEFAULT_PROXY_NAMESPACE = 'ProxyManagerGeneratedProxy';
 
-    /**
-     * @var string|null
-     */
-    protected $proxiesTargetDir;
-
-    /**
-     * @var string
-     */
-    protected $proxiesNamespace = self::DEFAULT_PROXY_NAMESPACE;
-
-    /**
-     * @var GeneratorStrategyInterface|null
-     */
-    protected $generatorStrategy;
-
-    /**
-     * @var AutoloaderInterface|null
-     */
-    protected $proxyAutoloader;
-
-    /**
-     * @var ClassNameInflectorInterface|null
-     */
-    protected $classNameInflector;
-
-    /**
-     * @var SignatureGeneratorInterface|null
-     */
-    protected $signatureGenerator;
-
-    /**
-     * @var SignatureCheckerInterface|null
-     */
-    protected $signatureChecker;
-
-    /**
-     * @var ClassSignatureGeneratorInterface|null
-     */
-    protected $classSignatureGenerator;
+    protected ?string $proxiesTargetDir;
+    protected string $proxiesNamespace = self::DEFAULT_PROXY_NAMESPACE;
+    protected ?GeneratorStrategyInterface $generatorStrategy;
+    protected ?AutoloaderInterface $proxyAutoloader;
+    protected ?ClassNameInflectorInterface $classNameInflector;
+    protected ?SignatureGeneratorInterface $signatureGenerator;
+    protected ?SignatureCheckerInterface $signatureChecker;
+    protected ?ClassSignatureGeneratorInterface $classSignatureGenerator;
 
     public function setProxyAutoloader(AutoloaderInterface $proxyAutoloader) : void
     {
@@ -76,7 +43,7 @@ class Configuration
     public function getProxyAutoloader() : AutoloaderInterface
     {
         return $this->proxyAutoloader
-            ?: $this->proxyAutoloader = new Autoloader(
+            ?? $this->proxyAutoloader = new Autoloader(
                 new FileLocator($this->getProxiesTargetDir()),
                 $this->getClassNameInflector()
             );
@@ -99,7 +66,8 @@ class Configuration
 
     public function getProxiesTargetDir() : string
     {
-        return $this->proxiesTargetDir ?: $this->proxiesTargetDir = sys_get_temp_dir();
+        return $this->proxiesTargetDir
+            ?? $this->proxiesTargetDir = sys_get_temp_dir();
     }
 
     public function setGeneratorStrategy(GeneratorStrategyInterface $generatorStrategy) : void
@@ -110,7 +78,7 @@ class Configuration
     public function getGeneratorStrategy() : GeneratorStrategyInterface
     {
         return $this->generatorStrategy
-            ?: $this->generatorStrategy = new EvaluatingGeneratorStrategy();
+            ?? $this->generatorStrategy = new EvaluatingGeneratorStrategy();
     }
 
     public function setClassNameInflector(ClassNameInflectorInterface $classNameInflector) : void
@@ -121,7 +89,7 @@ class Configuration
     public function getClassNameInflector() : ClassNameInflectorInterface
     {
         return $this->classNameInflector
-            ?: $this->classNameInflector = new ClassNameInflector($this->getProxiesNamespace());
+            ?? $this->classNameInflector = new ClassNameInflector($this->getProxiesNamespace());
     }
 
     public function setSignatureGenerator(SignatureGeneratorInterface $signatureGenerator) : void
@@ -131,7 +99,8 @@ class Configuration
 
     public function getSignatureGenerator() : SignatureGeneratorInterface
     {
-        return $this->signatureGenerator ?: $this->signatureGenerator = new SignatureGenerator();
+        return $this->signatureGenerator
+            ?? $this->signatureGenerator = new SignatureGenerator();
     }
 
     public function setSignatureChecker(SignatureCheckerInterface $signatureChecker) : void
@@ -142,7 +111,7 @@ class Configuration
     public function getSignatureChecker() : SignatureCheckerInterface
     {
         return $this->signatureChecker
-            ?: $this->signatureChecker = new SignatureChecker($this->getSignatureGenerator());
+            ?? $this->signatureChecker = new SignatureChecker($this->getSignatureGenerator());
     }
 
     public function setClassSignatureGenerator(ClassSignatureGeneratorInterface $classSignatureGenerator) : void
@@ -153,6 +122,6 @@ class Configuration
     public function getClassSignatureGenerator() : ClassSignatureGeneratorInterface
     {
         return $this->classSignatureGenerator
-            ?: new ClassSignatureGenerator($this->getSignatureGenerator());
+            ?? $this->classSignatureGenerator = new ClassSignatureGenerator($this->getSignatureGenerator());
     }
 }
