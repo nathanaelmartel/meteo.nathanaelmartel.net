@@ -4,10 +4,10 @@ namespace App\Form;
 
 use App\Entity\Measure;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class ReleveType extends AbstractType
 {
@@ -18,6 +18,7 @@ class ReleveType extends AbstractType
             'Ilek (hp)' => 'electricite-ilek-heures-pleines',
             'Ilek (gaz)' => 'gaz-ilek',*/
             'Panneau Solaire' => 'panneau-solaire',
+            'Eau' => 'eau',
         ];
 
         $builder

@@ -2,10 +2,10 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\Request;
 use App\Entity\Measure;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 class ReleveController extends AbstractController
 {
@@ -57,7 +57,13 @@ class ReleveController extends AbstractController
 
             $this->addFlash('success', 'Relève enregistré');
 
-            $this->addFlash('info', sprintf('%s kWH depuis la dernière relève, soit %s kWH / jour.', $measure_total, $measure_value));
+            $unity = '';
+            if ('panneau-solaire' == $measure->getType()) {
+                $unity = 'kWH';
+            } elseif ('eau' == $measure->getType()) {
+                $unity = 'm3';
+            }
+            $this->addFlash('info', sprintf('%s %s depuis la dernière relève, soit %s %s / jour.', $measure_total, $unity, number_format($measure_value, 3, ',', ' '), $unity));
 
             return $this->redirectToRoute('last_month');
         }
