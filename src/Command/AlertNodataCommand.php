@@ -35,15 +35,20 @@ class AlertNodataCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $client = new Client();
 
+        if (date('h') < 8) {
+            return 0;
+        }
+
         $last_temperature = new \DateTime($this->setting->get('last_temperature'));
         $last_alert = new \DateTime($this->setting->get('last_alert'));
         if (($last_temperature < new \DateTime('-30 minutes')) && $last_temperature > $last_alert) {
             $msg = sprintf('Pas de relevé de température depuis %s (le %s)', $last_temperature->format('H:i'), $last_temperature->format('d/m'));
             $io->error($msg);
-            $url = sprintf('https://smsapi.free-mobile.fr/sendmsg?user=%s&pass=%s&msg=%s',
-                    $this->setting->get('freemobile_user'),
-                    $this->setting->get('freemobile_pass'),
-                    urlencode($msg)
+            $url = sprintf(
+                'https://smsapi.free-mobile.fr/sendmsg?user=%s&pass=%s&msg=%s',
+                $this->setting->get('freemobile_user'),
+                $this->setting->get('freemobile_pass'),
+                urlencode($msg)
             );
             $client->request('GET', $url);
             $now = new \DateTime('now');
