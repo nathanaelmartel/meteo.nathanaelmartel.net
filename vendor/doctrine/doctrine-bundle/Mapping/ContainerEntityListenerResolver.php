@@ -6,6 +6,12 @@ use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 
+use function get_class;
+use function gettype;
+use function is_object;
+use function sprintf;
+use function trim;
+
 /**
  * @final
  */
@@ -96,7 +102,7 @@ class ContainerEntityListenerResolver implements EntityListenerServiceResolver
         return $this->container->get($serviceId);
     }
 
-    private function normalizeClassName(string $className) : string
+    private function normalizeClassName(string $className): string
     {
         return trim($className, '\\');
     }

@@ -12,7 +12,7 @@
 namespace Symfony\Bridge\PhpUnit\Legacy;
 
 /**
- * @internal use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait instead.
+ * @internal use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait instead
  */
 trait ExpectDeprecationTraitForV8_4
 {
@@ -21,8 +21,23 @@ trait ExpectDeprecationTraitForV8_4
      */
     public function expectDeprecation(): void
     {
-        if (1 > func_num_args() || !\is_string($message = func_get_arg(0))) {
+        if (1 > \func_num_args() || !\is_string($message = func_get_arg(0))) {
             throw new \InvalidArgumentException(sprintf('The "%s()" method requires the string $message argument.', __FUNCTION__));
+        }
+
+        // Expected deprecations set by isolated tests need to be written to a file
+        // so that the test running process can take account of them.
+        if ($file = getenv('SYMFONY_EXPECTED_DEPRECATIONS_SERIALIZE')) {
+            $this->getTestResultObject()->beStrictAboutTestsThatDoNotTestAnything(false);
+            $expectedDeprecations = file_get_contents($file);
+            if ($expectedDeprecations) {
+                $expectedDeprecations = array_merge(unserialize($expectedDeprecations), [$message]);
+            } else {
+                $expectedDeprecations = [$message];
+            }
+            file_put_contents($file, serialize($expectedDeprecations));
+
+            return;
         }
 
         if (!SymfonyTestsListenerTrait::$previousErrorHandler) {
@@ -33,7 +48,7 @@ trait ExpectDeprecationTraitForV8_4
     }
 
     /**
-     * @internal use expectDeprecation() instead.
+     * @internal use expectDeprecation() instead
      */
     public function expectDeprecationMessage(string $message): void
     {
@@ -41,7 +56,7 @@ trait ExpectDeprecationTraitForV8_4
     }
 
     /**
-     * @internal use expectDeprecation() instead.
+     * @internal use expectDeprecation() instead
      */
     public function expectDeprecationMessageMatches(string $regularExpression): void
     {

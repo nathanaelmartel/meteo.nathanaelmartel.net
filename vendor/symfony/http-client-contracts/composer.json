@@ -26,8 +26,13 @@
     },
     "minimum-stability": "dev",
     "extra": {
+        "branch-version": "2.3",
         "branch-alias": {
-            "dev-master": "2.1-dev"
+            "dev-main": "2.3-dev"
+        },
+        "thanks": {
+            "name": "symfony/contracts",
+            "url": "https://github.com/symfony/contracts"
         }
     }
 }

@@ -99,8 +99,8 @@ Content:
 
 ## Setup and autoloading
 
-Read the [documentation](http://github.com/Atlantic18/DoctrineExtensions/blob/master/doc/annotations.md#em-setup)
-or check the [example code](http://github.com/Atlantic18/DoctrineExtensions/tree/master/example)
+Read the [documentation](http://github.com/Atlantic18/DoctrineExtensions/tree/main/doc/annotations.md#em-setup)
+or check the [example code](http://github.com/Atlantic18/DoctrineExtensions/tree/main/example)
 on how to setup and use the extensions in the most optimized way.
 
 <a name="entity-mapping"></a>
@@ -316,9 +316,6 @@ Entity\Category:
         </field>
         <field name="right" column="rgt" type="integer">
             <gedmo:tree-right/>
-        </field>
-        <field name="root" type="integer" nullable="true">
-            <gedmo:tree-root/>
         </field>
         <field name="level" column="lvl" type="integer">
             <gedmo:tree-level/>

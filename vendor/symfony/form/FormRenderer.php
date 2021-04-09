@@ -23,7 +23,7 @@ use Twig\Environment;
  */
 class FormRenderer implements FormRendererInterface
 {
-    const CACHE_KEY_VAR = 'unique_block_prefix';
+    public const CACHE_KEY_VAR = 'unique_block_prefix';
 
     private $engine;
     private $csrfTokenManager;
@@ -291,9 +291,9 @@ class FormRenderer implements FormRendererInterface
     public function encodeCurrency(Environment $environment, string $text, string $widget = ''): string
     {
         if ('UTF-8' === $charset = $environment->getCharset()) {
-            $text = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $text = htmlspecialchars($text, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
         } else {
-            $text = htmlentities($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $text = htmlentities($text, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
             $text = iconv('UTF-8', $charset, $text);
             $widget = iconv('UTF-8', $charset, $widget);
         }

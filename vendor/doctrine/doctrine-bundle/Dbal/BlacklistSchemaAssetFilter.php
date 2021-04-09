@@ -3,8 +3,12 @@
 namespace Doctrine\Bundle\DoctrineBundle\Dbal;
 
 use Doctrine\DBAL\Schema\AbstractAsset;
+
 use function in_array;
 
+/**
+ * @deprecated Implement your own include/exclude mechanism
+ */
 class BlacklistSchemaAssetFilter
 {
     /** @var string[] */
@@ -18,7 +22,10 @@ class BlacklistSchemaAssetFilter
         $this->blacklist = $blacklist;
     }
 
-    public function __invoke($assetName) : bool
+    /**
+     * @param string|AbstractAsset $assetName
+     */
+    public function __invoke($assetName): bool
     {
         if ($assetName instanceof AbstractAsset) {
             $assetName = $assetName->getName();

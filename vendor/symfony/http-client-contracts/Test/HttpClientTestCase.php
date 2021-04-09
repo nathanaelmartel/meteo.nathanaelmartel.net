@@ -811,6 +811,30 @@ abstract class HttpClientTestCase extends TestCase
         }
     }
 
+    public function testTimeoutWithActiveConcurrentStream()
+    {
+        $p1 = TestHttpServer::start(8067);
+        $p2 = TestHttpServer::start(8077);
+
+        $client = $this->getHttpClient(__FUNCTION__);
+        $streamingResponse = $client->request('GET', 'http://localhost:8067/max-duration');
+        $blockingResponse = $client->request('GET', 'http://localhost:8077/timeout-body', [
+            'timeout' => 0.25,
+        ]);
+
+        $this->assertSame(200, $streamingResponse->getStatusCode());
+        $this->assertSame(200, $blockingResponse->getStatusCode());
+
+        $this->expectException(TransportExceptionInterface::class);
+
+        try {
+            $blockingResponse->getContent();
+        } finally {
+            $p1->stop();
+            $p2->stop();
+        }
+    }
+
     public function testDestruct()
     {
         $client = $this->getHttpClient(__FUNCTION__);
@@ -836,6 +860,18 @@ abstract class HttpClientTestCase extends TestCase
         }
     }
 
+    public function testGetEncodedContentAfterDestruct()
+    {
+        $client = $this->getHttpClient(__FUNCTION__);
+
+        try {
+            $client->request('GET', 'http://localhost:8057/404-gzipped');
+            $this->fail(ClientExceptionInterface::class.' expected');
+        } catch (ClientExceptionInterface $e) {
+            $this->assertSame('some text', $e->getResponse()->getContent(false));
+        }
+    }
+
     public function testProxy()
     {
         $client = $this->getHttpClient(__FUNCTION__);
@@ -845,7 +881,7 @@ abstract class HttpClientTestCase extends TestCase
 
         $body = $response->toArray();
         $this->assertSame('localhost:8057', $body['HTTP_HOST']);
-        $this->assertRegexp('#^http://(localhost|127\.0\.0\.1):8057/$#', $body['REQUEST_URI']);
+        $this->assertMatchesRegularExpression('#^http://(localhost|127\.0\.0\.1):8057/$#', $body['REQUEST_URI']);
 
         $response = $client->request('GET', 'http://localhost:8057/', [
             'proxy' => 'http://foo:b%3Dar@localhost:8057',

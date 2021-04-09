@@ -3,15 +3,33 @@
 namespace Doctrine\Bundle\DoctrineBundle\Command\Proxy;
 
 use Doctrine\DBAL\Tools\Console\Command\RunSqlCommand;
+use Doctrine\DBAL\Tools\Console\ConnectionProvider;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use function sprintf;
+use function trigger_error;
+
+use const E_USER_DEPRECATED;
+
 /**
  * Execute a SQL query and output the results.
+ *
+ * @deprecated use Doctrine\DBAL\Tools\Console\Command\RunSqlCommand instead
  */
 class RunSqlDoctrineCommand extends RunSqlCommand
 {
+    /** @var ConnectionProvider|null */
+    private $connectionProvider;
+
+    public function __construct(?ConnectionProvider $connectionProvider = null)
+    {
+        parent::__construct($connectionProvider);
+
+        $this->connectionProvider = $connectionProvider;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -41,7 +59,15 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        DoctrineCommandHelper::setApplicationConnection($this->getApplication(), $input->getOption('connection'));
+        @trigger_error(sprintf('The "%s" (doctrine:query:sql) is deprecated, use dbal:run-sql command instead.', self::class), E_USER_DEPRECATED);
+
+        if (! $this->connectionProvider) {
+            DoctrineCommandHelper::setApplicationConnection($this->getApplication(), $input->getOption('connection'));
+
+            // compatibility with doctrine/dbal 2.11+
+            // where this option is also present and unsupported before we are not switching to use a ConnectionProvider
+            $input->setOption('connection', null);
+        }
 
         return parent::execute($input, $output);
     }

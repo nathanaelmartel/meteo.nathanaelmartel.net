@@ -25,10 +25,10 @@ use Symfony\Component\Validator\Exception\MissingOptionsException;
  */
 class Range extends Constraint
 {
-    const INVALID_CHARACTERS_ERROR = 'ad9a9798-7a99-4df7-8ce9-46e416a1e60b';
-    const NOT_IN_RANGE_ERROR = '04b91c99-a946-4221-afc5-e65ebac401eb';
-    const TOO_HIGH_ERROR = '2d28afcb-e32e-45fb-a815-01c431a86a69';
-    const TOO_LOW_ERROR = '76454e69-502c-46c5-9643-f447d837c4d5';
+    public const INVALID_CHARACTERS_ERROR = 'ad9a9798-7a99-4df7-8ce9-46e416a1e60b';
+    public const NOT_IN_RANGE_ERROR = '04b91c99-a946-4221-afc5-e65ebac401eb';
+    public const TOO_HIGH_ERROR = '2d28afcb-e32e-45fb-a815-01c431a86a69';
+    public const TOO_LOW_ERROR = '76454e69-502c-46c5-9643-f447d837c4d5';
 
     protected static $errorNames = [
         self::INVALID_CHARACTERS_ERROR => 'INVALID_CHARACTERS_ERROR',
@@ -46,6 +46,16 @@ class Range extends Constraint
     public $max;
     public $maxPropertyPath;
 
+    /**
+     * @internal
+     */
+    public $deprecatedMinMessageSet = false;
+
+    /**
+     * @internal
+     */
+    public $deprecatedMaxMessageSet = false;
+
     public function __construct($options = null)
     {
         if (\is_array($options)) {
@@ -59,6 +69,16 @@ class Range extends Constraint
 
             if ((isset($options['minPropertyPath']) || isset($options['maxPropertyPath'])) && !class_exists(PropertyAccess::class)) {
                 throw new LogicException(sprintf('The "%s" constraint requires the Symfony PropertyAccess component to use the "minPropertyPath" or "maxPropertyPath" option.', static::class));
+            }
+
+            if (isset($options['min']) && isset($options['max'])) {
+                $this->deprecatedMinMessageSet = isset($options['minMessage']);
+                $this->deprecatedMaxMessageSet = isset($options['maxMessage']);
+
+                // BC layer, should throw a ConstraintDefinitionException in 6.0
+                if ($this->deprecatedMinMessageSet || $this->deprecatedMaxMessageSet) {
+                    trigger_deprecation('symfony/validator', '4.4', '"minMessage" and "maxMessage" are deprecated when the "min" and "max" options are both set. Use "notInRangeMessage" instead.');
+                }
             }
         }
 

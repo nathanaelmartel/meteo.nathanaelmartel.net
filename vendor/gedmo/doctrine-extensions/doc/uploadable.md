@@ -25,8 +25,8 @@ Content:
 
 ## Setup and autoloading
 
-Read the [documentation](http://github.com/l3pp4rd/DoctrineExtensions/blob/master/doc/annotations.md#em-setup)
-or check the [example code](http://github.com/l3pp4rd/DoctrineExtensions/tree/master/example)
+Read the [documentation](http://github.com/Atlantic18/DoctrineExtensions/tree/main/doc/annotations.md#em-setup)
+or check the [example code](http://github.com/Atlantic18/DoctrineExtensions/tree/main/example)
 on how to setup and use the extensions in most optimized way.
 
 
@@ -354,6 +354,7 @@ use Gedmo\Uploadable\FileInfo\FileInfoInterface;
 class CustomFileInfo implements FileInfoInterface
 {
     protected $path;
+    protected $name;
     protected $size;
     protected $type;
     protected $filename;
@@ -369,7 +370,7 @@ class CustomFileInfo implements FileInfoInterface
     // This returns the actual path of the file
     public function getTmpName()
     {
-        return $path;
+        return $this->path;
     }
 
     // This returns the filename

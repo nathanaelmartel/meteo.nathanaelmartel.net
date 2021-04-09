@@ -250,7 +250,7 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
             // If you update this check, update accordingly the one in Symfony\Component\PropertyInfo\Extractor\SerializerExtractor::getProperties()
             if (
                 !$ignore &&
-                (false === $groups || array_intersect($attributeMetadata->getGroups(), $groups)) &&
+                (false === $groups || array_intersect(array_merge($attributeMetadata->getGroups(), ['*']), $groups)) &&
                 $this->isAllowedAttribute($classOrObject, $name = $attributeMetadata->getName(), null, $context)
             ) {
                 $allowedAttributes[] = $attributesAsString ? $name : $attributeMetadata;
@@ -411,7 +411,7 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
     protected function denormalizeParameter(\ReflectionClass $class, \ReflectionParameter $parameter, string $parameterName, $parameterData, array $context, string $format = null)
     {
         try {
-            if (($parameterType = $parameter->getType()) && !$parameterType->isBuiltin()) {
+            if (($parameterType = $parameter->getType()) instanceof \ReflectionNamedType && !$parameterType->isBuiltin()) {
                 $parameterClass = $parameterType->getName();
                 new \ReflectionClass($parameterClass); // throws a \ReflectionException if the class doesn't exist
 

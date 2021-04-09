@@ -13,6 +13,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use function chmod;
+use function dirname;
+use function file_put_contents;
+use function is_dir;
+use function mkdir;
+use function sprintf;
+use function str_replace;
+
 /**
  * Import Doctrine ORM metadata mapping information from an existing database.
  *
@@ -142,12 +150,14 @@ EOT
                 } else {
                     $path = $destPath . '/' . str_replace('\\', '.', $className) . '.orm.' . $type;
                 }
+
                 $output->writeln(sprintf('  > writing <comment>%s</comment>', $path));
                 $code = $exporter->exportClassMetadata($class);
                 $dir  = dirname($path);
                 if (! is_dir($dir)) {
                     mkdir($dir, 0775, true);
                 }
+
                 file_put_contents($path, $code);
                 chmod($path, 0664);
             }

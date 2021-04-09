@@ -63,15 +63,15 @@ abstract class IntlDateFormatter
     protected $errorMessage = 'U_ZERO_ERROR';
 
     /* date/time format types */
-    const NONE = -1;
-    const FULL = 0;
-    const LONG = 1;
-    const MEDIUM = 2;
-    const SHORT = 3;
+    public const NONE = -1;
+    public const FULL = 0;
+    public const LONG = 1;
+    public const MEDIUM = 2;
+    public const SHORT = 3;
 
     /* calendar formats */
-    const TRADITIONAL = 0;
-    const GREGORIAN = 1;
+    public const TRADITIONAL = 0;
+    public const GREGORIAN = 1;
 
     /**
      * Patterns used to format the date when no pattern is provided.
@@ -144,6 +144,10 @@ abstract class IntlDateFormatter
 
         $this->datetype = null !== $datetype ? $datetype : self::FULL;
         $this->timetype = null !== $timetype ? $timetype : self::FULL;
+
+        if ('' === ($pattern ?? '')) {
+            $pattern = $this->getDefaultPattern();
+        }
 
         $this->setPattern($pattern);
         $this->setTimeZone($timezone);
@@ -484,7 +488,7 @@ abstract class IntlDateFormatter
     /**
      * Set the formatter's pattern.
      *
-     * @param string|null $pattern A pattern string in conformance with the ICU IntlDateFormatter documentation
+     * @param string $pattern A pattern string in conformance with the ICU IntlDateFormatter documentation
      *
      * @return bool true on success or false on failure
      *
@@ -493,11 +497,7 @@ abstract class IntlDateFormatter
      */
     public function setPattern(?string $pattern)
     {
-        if (null === $pattern) {
-            $pattern = $this->getDefaultPattern();
-        }
-
-        $this->pattern = $pattern;
+        $this->pattern = (string) $pattern;
 
         return true;
     }

@@ -49,8 +49,9 @@ class DeprecationErrorHandler
      * Registers and configures the deprecation handler.
      *
      * The mode is a query string with options:
-     *  - "disabled" to disable the deprecation handler
+     *  - "disabled" to enable/disable the deprecation handler
      *  - "verbose" to enable/disable displaying the deprecation report
+     *  - "quiet" to disable displaying the deprecation report only for some groups (i.e. quiet[]=other)
      *  - "max" to configure the number of deprecations to allow before exiting with a non-zero
      *    status code; it's an array with keys "total", "self", "direct" and "indirect"
      *
@@ -88,7 +89,7 @@ class DeprecationErrorHandler
     {
         $deprecations = [];
         $previousErrorHandler = set_error_handler(function ($type, $msg, $file, $line, $context = []) use (&$deprecations, &$previousErrorHandler) {
-            if (E_USER_DEPRECATED !== $type && E_DEPRECATED !== $type && (E_WARNING !== $type || false === strpos($msg, '" targeting switch is equivalent to "break'))) {
+            if (\E_USER_DEPRECATED !== $type && \E_DEPRECATED !== $type && (\E_WARNING !== $type || false === strpos($msg, '" targeting switch is equivalent to "break'))) {
                 if ($previousErrorHandler) {
                     return $previousErrorHandler($type, $msg, $file, $line, $context);
                 }
@@ -120,44 +121,51 @@ class DeprecationErrorHandler
      */
     public function handleError($type, $msg, $file, $line, $context = [])
     {
-        if ((E_USER_DEPRECATED !== $type && E_DEPRECATED !== $type && (E_WARNING !== $type || false === strpos($msg, '" targeting switch is equivalent to "break'))) || !$this->getConfiguration()->isEnabled()) {
+        if ((\E_USER_DEPRECATED !== $type && \E_DEPRECATED !== $type && (\E_WARNING !== $type || false === strpos($msg, '" targeting switch is equivalent to "break'))) || !$this->getConfiguration()->isEnabled()) {
             return \call_user_func(self::getPhpUnitErrorHandler(), $type, $msg, $file, $line, $context);
         }
 
-        $deprecation = new Deprecation($msg, debug_backtrace(), $file);
+        $trace = debug_backtrace();
+
+        if (isset($trace[1]['function'], $trace[1]['args'][0]) && ('trigger_error' === $trace[1]['function'] || 'user_error' === $trace[1]['function'])) {
+            $msg = $trace[1]['args'][0];
+        }
+
+        $deprecation = new Deprecation($msg, $trace, $file);
         if ($deprecation->isMuted()) {
             return null;
         }
-        $group = 'other';
+        if ($this->getConfiguration()->isBaselineDeprecation($deprecation)) {
+            return null;
+        }
 
-        if ($deprecation->originatesFromAnObject()) {
+        $msg = $deprecation->getMessage();
+
+        if (error_reporting() & $type) {
+            $group = 'unsilenced';
+        } elseif ($deprecation->isLegacy()) {
+            $group = 'legacy';
+        } else {
+            $group = [
+                Deprecation::TYPE_SELF => 'self',
+                Deprecation::TYPE_DIRECT => 'direct',
+                Deprecation::TYPE_INDIRECT => 'indirect',
+                Deprecation::TYPE_UNDETERMINED => 'other',
+            ][$deprecation->getType()];
+        }
+
+        if ($this->getConfiguration()->shouldDisplayStackTrace($msg)) {
+            echo "\n".ucfirst($group).' '.$deprecation->toString();
+
+            exit(1);
+        }
+
+        if ('legacy' === $group) {
+            $this->deprecationGroups[$group]->addNotice();
+        } else if ($deprecation->originatesFromAnObject()) {
             $class = $deprecation->originatingClass();
             $method = $deprecation->originatingMethod();
-            $msg = $deprecation->getMessage();
-
-            if (error_reporting() & $type) {
-                $group = 'unsilenced';
-            } elseif ($deprecation->isLegacy()) {
-                $group = 'legacy';
-            } else {
-                $group = [
-                    Deprecation::TYPE_SELF => 'self',
-                    Deprecation::TYPE_DIRECT => 'direct',
-                    Deprecation::TYPE_INDIRECT => 'indirect',
-                    Deprecation::TYPE_UNDETERMINED => 'other',
-                ][$deprecation->getType()];
-            }
-
-            if ($this->getConfiguration()->shouldDisplayStackTrace($msg)) {
-                echo "\n".ucfirst($group).' '.$deprecation->toString();
-
-                exit(1);
-            }
-            if ('legacy' !== $group) {
-                $this->deprecationGroups[$group]->addNoticeFromObject($msg, $class, $method);
-            } else {
-                $this->deprecationGroups[$group]->addNotice();
-            }
+            $this->deprecationGroups[$group]->addNoticeFromObject($msg, $class, $method);
         } else {
             $this->deprecationGroups[$group]->addNoticeFromProceduralCode($msg);
         }
@@ -205,6 +213,10 @@ class DeprecationErrorHandler
 
             $isFailingAtShutdown = !$configuration->tolerates($this->deprecationGroups);
             $this->displayDeprecations($groups, $configuration, $isFailingAtShutdown);
+
+            if ($configuration->isGeneratingBaseline()) {
+                $configuration->writeBaseline();
+            }
 
             if ($isFailing || $isFailingAtShutdown) {
                 exit(1);
@@ -330,13 +342,13 @@ class DeprecationErrorHandler
     private static function getPhpUnitErrorHandler()
     {
         if (!isset(self::$isAtLeastPhpUnit83)) {
-            self::$isAtLeastPhpUnit83 = class_exists('PHPUnit\Util\ErrorHandler') && method_exists('PHPUnit\Util\ErrorHandler', '__invoke');
+            self::$isAtLeastPhpUnit83 = class_exists(ErrorHandler::class) && method_exists(ErrorHandler::class, '__invoke');
         }
         if (!self::$isAtLeastPhpUnit83) {
             return 'PHPUnit\Util\ErrorHandler::handleError';
         }
 
-        foreach (debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
+        foreach (debug_backtrace(\DEBUG_BACKTRACE_PROVIDE_OBJECT | \DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
             if (isset($frame['object']) && $frame['object'] instanceof TestResult) {
                 return new ErrorHandler(
                     $frame['object']->getConvertDeprecationsToExceptions(),
@@ -375,21 +387,21 @@ class DeprecationErrorHandler
 
         if (\DIRECTORY_SEPARATOR === '\\') {
             return (\function_exists('sapi_windows_vt100_support')
-                && sapi_windows_vt100_support(STDOUT))
+                && sapi_windows_vt100_support(\STDOUT))
                 || false !== getenv('ANSICON')
                 || 'ON' === getenv('ConEmuANSI')
                 || 'xterm' === getenv('TERM');
         }
 
         if (\function_exists('stream_isatty')) {
-            return stream_isatty(STDOUT);
+            return stream_isatty(\STDOUT);
         }
 
         if (\function_exists('posix_isatty')) {
-            return posix_isatty(STDOUT);
+            return posix_isatty(\STDOUT);
         }
 
-        $stat = fstat(STDOUT);
+        $stat = fstat(\STDOUT);
 
         // Check if formatted mode is S_IFCHR
         return $stat ? 0020000 === ($stat['mode'] & 0170000) : false;

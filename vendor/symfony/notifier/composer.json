@@ -1,7 +1,7 @@
 {
     "name": "symfony/notifier",
     "type": "library",
-    "description": "A library to notify messages",
+    "description": "Sends notifications via one or more channels (email, SMS, ...)",
     "keywords": ["notifier", "notification"],
     "homepage": "https://symfony.com",
     "license": "MIT",
@@ -28,10 +28,5 @@
             "/Tests/"
         ]
     },
-    "minimum-stability": "dev",
-    "extra": {
-        "branch-alias": {
-            "dev-master": "5.1-dev"
-        }
-    }
+    "minimum-stability": "dev"
 }

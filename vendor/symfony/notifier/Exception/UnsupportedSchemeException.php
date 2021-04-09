@@ -40,7 +40,7 @@ class UnsupportedSchemeException extends LogicException
         ],
         'rocketchat' => [
             'class' => Bridge\RocketChat\RocketChatTransportFactory::class,
-            'package' => 'rocketchat-notifier',
+            'package' => 'symfony/rocket-chat-notifier',
         ],
         'twilio' => [
             'class' => Bridge\Twilio\TwilioTransportFactory::class,
@@ -52,11 +52,11 @@ class UnsupportedSchemeException extends LogicException
         ],
         'freemobile' => [
             'class' => Bridge\FreeMobile\FreeMobileTransportFactory::class,
-            'package' => 'symfony/freemobile-notifier',
+            'package' => 'symfony/free-mobile-notifier',
         ],
         'ovhcloud' => [
             'class' => Bridge\OvhCloud\OvhCloudTransportFactory::class,
-            'package' => 'symfony/ovhcloud-notifier',
+            'package' => 'symfony/ovh-cloud-notifier',
         ],
         'sinch' => [
             'class' => Bridge\Sinch\SinchTransportFactory::class,
