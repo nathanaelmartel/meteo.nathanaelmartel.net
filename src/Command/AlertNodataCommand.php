@@ -2,18 +2,24 @@
 
 namespace App\Command;
 
+use App\SimplementWeb\SettingsBundle\Service\Setting;
+use Goutte\Client;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use App\SimplementWeb\SettingsBundle\Service\Setting;
-use Goutte\Client;
 
 class AlertNodataCommand extends Command
 {
     protected static $defaultName = 'app:alert:nodata';
+
+    public function __construct(Setting $setting)
+    {
+        parent::__construct();
+        $this->setting = $setting;
+    }
 
     protected function configure()
     {
@@ -24,18 +30,13 @@ class AlertNodataCommand extends Command
         ;
     }
 
-    public function __construct(Setting $setting)
-    {
-        parent::__construct();
-        $this->setting = $setting;
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $client = new Client();
 
-        if (date('h') < 8) {
+        $hour = (int) date('H');
+        if ($hour < 8) {
             return 0;
         }
 
