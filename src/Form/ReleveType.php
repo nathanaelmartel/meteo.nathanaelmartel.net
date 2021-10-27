@@ -13,25 +13,41 @@ class ReleveType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $types = [
-            /*'Ilek (hc)' => 'electricite-ilek-heures-creuses',
-            'Ilek (hp)' => 'electricite-ilek-heures-pleines',
-            'Ilek (gaz)' => 'gaz-ilek',*/
-            'Panneau Solaire' => 'panneau-solaire',
-            'Eau' => 'eau',
-        ];
+        /*  $types = [
+              'Panneau Solaire' => 'panneau-solaire',
+              'Eau' => 'eau',
+          ];*/
+        $object = $builder->getData();
 
         $builder
-            ->add('type', ChoiceType::class, [
+            /*->add('type', ChoiceType::class, [
                 'choices' => $types,
                 'label' => 'Type',
                 'expanded' => false,
                 'multiple' => false,
                 'mapped' => true,
+            ])*/
+            ->add('stated_at', DateType::class, [
+                'label' => 'Jour de la relève',
+                'widget' => 'single_text',
             ])
-            ->add('releve', null, ['label' => 'Valeur'])
-            ->add('stated_at', DateType::class, ['label' => 'Jour de la relève', 'widget' => 'single_text'])
+            ->add('releve', null, [
+                'label' => ('' == $object->getUnit()) ? 'Valeur' : $object->getUnit(),
+            ])
         ;
+
+        if ('voiture' == $object->getType()) {
+            $builder
+                ->add('kilometre', null, [
+                    'label' => 'Kilometrage',
+                    'mapped' => false,
+                ])
+                ->add('essence', null, [
+                    'label' => 'Essence',
+                    'mapped' => false,
+                ])
+            ;
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver)

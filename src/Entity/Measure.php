@@ -9,9 +9,27 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Measure
 {
+    public const TYPES = [
+        'panneau-solaire' => 'Panneau Solaire',
+        'eau' => 'Eau',
+        'voiture' => 'Voiture',
+    ];
+
+    public const TYPESICONS = [
+        'panneau-solaire' => 'solar-panel',
+        'eau' => 'faucet-drip',
+        'voiture' => 'car',
+    ];
+
+    public const UNIT = [
+        'panneau-solaire' => 'kWH',
+        'eau' => 'm3',
+        'voiture' => '€',
+    ];
+
     /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
+     * @ORM\Id
+     * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
     private $id;
@@ -41,6 +59,11 @@ class Measure
      */
     private $releve;
 
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $data;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -49,6 +72,33 @@ class Measure
     public function getType(): ?string
     {
         return $this->type;
+    }
+
+    public function getIcon(): ?string
+    {
+        if (isset(self::TYPESICONS[$this->getType()])) {
+            return self::TYPESICONS[$this->getType()];
+        }
+
+        return '';
+    }
+
+    public function getTypeLabel(): ?string
+    {
+        if (isset(self::TYPES[$this->getType()])) {
+            return self::TYPES[$this->getType()];
+        }
+
+        return $this->getType();
+    }
+
+    public function getUnit(): ?string
+    {
+        if (isset(self::UNIT[$this->getType()])) {
+            return self::UNIT[$this->getType()];
+        }
+
+        return '';
     }
 
     public function setType(string $type): self
@@ -102,6 +152,18 @@ class Measure
     public function setReleve(?float $releve): self
     {
         $this->releve = $releve;
+
+        return $this;
+    }
+
+    public function getData(): ?string
+    {
+        return $this->data;
+    }
+
+    public function setData(?string $data): self
+    {
+        $this->data = $data;
 
         return $this;
     }

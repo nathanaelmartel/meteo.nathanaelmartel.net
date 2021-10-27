@@ -2,14 +2,20 @@
 
 {% block title %}Relevé{% endblock %}
 
-{% block body %}
-    <div class="card card-body">
-        {{ form_start(form) }}
-        {{ form_widget(form) }}
+{% block breadcrumbitems %}
+  <span class="breadcrumb-item active">Relève</span>
+{% endblock %}
 
-        <div class="text-right">
-            <input type="submit" class="btn btn-success" value="Sauvegarder"/>
-        </div>
-        {{ form_end(form) }}
+{% block body %}
+  <div class="card card-body">
+    <div class="btn-group">
+      {% for type_id, type_name in types %}
+        <a href="{{ path('releve_type', {'type': type_id}) }}" class="btn btn-light">
+          <i class="fal fa-{{ icons[type_id] }} fa-fw fa-2x"></i>
+          <br>
+          {{ type_name }}
+        </a>
+      {% endfor %}
     </div>
+  </div>
 {% endblock %}
