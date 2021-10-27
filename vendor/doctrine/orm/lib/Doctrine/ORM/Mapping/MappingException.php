@@ -278,14 +278,13 @@ class MappingException extends ORMException
         return new self(sprintf("Result set mapping name on entity class '%s' is not defined.", $className));
     }
 
-    /**
-     * @param string $fieldName
-     *
-     * @return MappingException
-     */
-    public static function oneToManyRequiresMappedBy($fieldName)
+    public static function oneToManyRequiresMappedBy(string $entityName, string $fieldName): MappingException
     {
-        return new self(sprintf("OneToMany mapping on field '%s' requires the 'mappedBy' attribute.", $fieldName));
+        return new self(sprintf(
+            "OneToMany mapping on entity '%s' field '%s' requires the 'mappedBy' attribute.",
+            $entityName,
+            $fieldName
+        ));
     }
 
     /**
@@ -383,6 +382,8 @@ class MappingException extends ORMException
     }
 
     /**
+     * @deprecated 2.9 no longer in use
+     *
      * @param string $className
      * @param string $propertyName
      *
@@ -921,7 +922,10 @@ class MappingException extends ORMException
     }
 
     /**
-     * @return MappingException
+     * @param string $className
+     * @param string $propertyName
+     *
+     * @return self
      */
     public static function illegalOverrideOfInheritedProperty($className, $propertyName)
     {
@@ -931,6 +935,34 @@ class MappingException extends ORMException
                 'declared on a mapped superclass or a trait.',
                 $className,
                 $propertyName
+            )
+        );
+    }
+
+    /**
+     * @return self
+     */
+    public static function invalidIndexConfiguration($className, $indexName)
+    {
+        return new self(
+            sprintf(
+                'Index %s for entity %s should contain columns or fields values, but not both.',
+                $indexName,
+                $className
+            )
+        );
+    }
+
+    /**
+     * @return self
+     */
+    public static function invalidUniqueConstraintConfiguration($className, $indexName)
+    {
+        return new self(
+            sprintf(
+                'Unique constraint %s for entity %s should contain columns or fields values, but not both.',
+                $indexName,
+                $className
             )
         );
     }

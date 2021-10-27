@@ -21,6 +21,7 @@
 namespace Doctrine\ORM\Tools;
 
 use Doctrine\DBAL\Types\Type;
+use Doctrine\Deprecations\Deprecation;
 use Doctrine\Inflector\InflectorFactory;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Symfony\Component\Yaml\Yaml;
@@ -59,11 +60,19 @@ class ConvertDoctrine1Schema
      * Constructor passes the directory or array of directories
      * to convert the Doctrine 1 schema files from.
      *
+     * @param string[]|string $from
      * @psalm-param list<string>|string $from
      */
     public function __construct($from)
     {
         $this->from = (array) $from;
+
+        Deprecation::trigger(
+            'doctrine/orm',
+            'https://github.com/doctrine/orm/issues/8458',
+            '%s is deprecated with no replacement',
+            self::class
+        );
     }
 
     /**
@@ -71,7 +80,6 @@ class ConvertDoctrine1Schema
      * Doctrine 1 schema.
      *
      * @return ClassMetadataInfo[] An array of ClassMetadataInfo instances
-     *
      * @psalm-return list<ClassMetadataInfo>
      */
     public function getMetadata()
@@ -98,9 +106,12 @@ class ConvertDoctrine1Schema
 
     /**
      * @param mixed[] $mappingInformation
+     * @psalm-param class-string $className
      */
-    private function convertToClassMetadataInfo(string $className, $mappingInformation): ClassMetadataInfo
-    {
+    private function convertToClassMetadataInfo(
+        string $className,
+        array $mappingInformation
+    ): ClassMetadataInfo {
         $metadata = new ClassMetadataInfo($className);
 
         $this->convertTableName($className, $mappingInformation, $metadata);
@@ -129,13 +140,13 @@ class ConvertDoctrine1Schema
     }
 
     /**
-     * @param string  $className
      * @param mixed[] $model
-     *
-     * @return void
      */
-    private function convertColumns($className, array $model, ClassMetadataInfo $metadata)
-    {
+    private function convertColumns(
+        string $className,
+        array $model,
+        ClassMetadataInfo $metadata
+    ): void {
         $id = false;
 
         if (isset($model['columns']) && $model['columns']) {
@@ -161,16 +172,18 @@ class ConvertDoctrine1Schema
     }
 
     /**
-     * @param string         $className
-     * @param string         $name
      * @param string|mixed[] $column
      *
      * @return mixed[]
      *
      * @throws ToolsException
      */
-    private function convertColumn($className, $name, $column, ClassMetadataInfo $metadata)
-    {
+    private function convertColumn(
+        string $className,
+        string $name,
+        $column,
+        ClassMetadataInfo $metadata
+    ): array {
         if (is_string($column)) {
             $string         = $column;
             $column         = [];
@@ -203,7 +216,9 @@ class ConvertDoctrine1Schema
             throw ToolsException::couldNotMapDoctrine1Type($column['type']);
         }
 
-        $fieldMapping = [];
+        $fieldMapping = [
+            'nullable' => ! ($column['notnull'] ?? true), // Doctrine 1 columns are nullable by default
+        ];
 
         if (isset($column['primary'])) {
             $fieldMapping['id'] = true;
@@ -217,7 +232,7 @@ class ConvertDoctrine1Schema
             $fieldMapping['length'] = $column['length'];
         }
 
-        $allowed = ['precision', 'scale', 'unique', 'options', 'notnull', 'version'];
+        $allowed = ['precision', 'scale', 'unique', 'options', 'version'];
 
         foreach ($column as $key => $value) {
             if (in_array($key, $allowed)) {
@@ -251,13 +266,13 @@ class ConvertDoctrine1Schema
     }
 
     /**
-     * @param string  $className
      * @param mixed[] $model
-     *
-     * @return void
      */
-    private function convertIndexes($className, array $model, ClassMetadataInfo $metadata)
-    {
+    private function convertIndexes(
+        string $className,
+        array $model,
+        ClassMetadataInfo $metadata
+    ): void {
         if (empty($model['indexes'])) {
             return;
         }
@@ -273,13 +288,13 @@ class ConvertDoctrine1Schema
     }
 
     /**
-     * @param string  $className
      * @param mixed[] $model
-     *
-     * @return void
      */
-    private function convertRelations($className, array $model, ClassMetadataInfo $metadata)
-    {
+    private function convertRelations(
+        string $className,
+        array $model,
+        ClassMetadataInfo $metadata
+    ): void {
         if (empty($model['relations'])) {
             return;
         }

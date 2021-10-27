@@ -20,16 +20,21 @@
 
 namespace Doctrine\ORM\Mapping;
 
+use Attribute;
+use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+
 /**
  * @Annotation
+ * @NamedArgumentConstructor()
  * @Target("PROPERTY")
  */
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class ManyToOne implements Annotation
 {
-    /** @var string */
+    /** @var string|null */
     public $targetEntity;
 
-    /** @var array<string> */
+    /** @var string[]|null */
     public $cascade;
 
     /**
@@ -40,6 +45,21 @@ final class ManyToOne implements Annotation
      */
     public $fetch = 'LAZY';
 
-    /** @var string */
+    /** @var string|null */
     public $inversedBy;
+
+    /**
+     * @param string[]|null $cascade
+     */
+    public function __construct(
+        ?string $targetEntity = null,
+        ?array $cascade = null,
+        string $fetch = 'LAZY',
+        ?string $inversedBy = null
+    ) {
+        $this->targetEntity = $targetEntity;
+        $this->cascade      = $cascade;
+        $this->fetch        = $fetch;
+        $this->inversedBy   = $inversedBy;
+    }
 }

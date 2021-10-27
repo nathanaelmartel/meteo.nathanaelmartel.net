@@ -21,11 +21,14 @@
 namespace Doctrine\ORM;
 
 use BadMethodCallException;
+use Doctrine\Common\Cache\Psr6\CacheAdapter;
+use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Util\ClassUtils;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\LockMode;
+use Doctrine\Deprecations\Deprecation;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Doctrine\ORM\Proxy\ProxyFactory;
@@ -47,10 +50,8 @@ use function is_callable;
 use function is_object;
 use function is_string;
 use function ltrim;
+use function method_exists;
 use function sprintf;
-use function trigger_error;
-
-use const E_USER_DEPRECATED;
 
 /**
  * The EntityManager is the central access point to ORM functionality.
@@ -166,7 +167,8 @@ use const E_USER_DEPRECATED;
 
         $this->metadataFactory = new $metadataFactoryClassName();
         $this->metadataFactory->setEntityManager($this);
-        $this->metadataFactory->setCacheDriver($this->config->getMetadataCacheImpl());
+
+        $this->configureMetadataCache();
 
         $this->repositoryFactory = $config->getRepositoryFactory();
         $this->unitOfWork        = new UnitOfWork($this);
@@ -284,9 +286,7 @@ use const E_USER_DEPRECATED;
      *
      * Internal note: Performance-sensitive method.
      *
-     * @param string $className
-     *
-     * @return ClassMetadata
+     * {@inheritDoc}
      */
     public function getClassMetadata($className)
     {
@@ -365,9 +365,11 @@ use const E_USER_DEPRECATED;
     public function flush($entity = null)
     {
         if ($entity !== null) {
-            @trigger_error(
-                'Calling ' . __METHOD__ . '() with any arguments to flush specific entities is deprecated and will not be supported in Doctrine ORM 3.0.',
-                E_USER_DEPRECATED
+            Deprecation::trigger(
+                'doctrine/orm',
+                'https://github.com/doctrine/orm/issues/8459',
+                'Calling %s() with any arguments to flush specific entities is deprecated and will not be supported in Doctrine ORM 3.0.',
+                __METHOD__
             );
         }
 
@@ -386,8 +388,10 @@ use const E_USER_DEPRECATED;
      *    during the search.
      * @param int|null $lockVersion The version of the entity to find when using
      * optimistic locking.
+     * @psalm-param class-string<T> $className
      *
      * @return object|null The entity instance or NULL if the entity can not be found.
+     * @psalm-return ?T
      *
      * @throws OptimisticLockException
      * @throws ORMInvalidArgumentException
@@ -395,8 +399,6 @@ use const E_USER_DEPRECATED;
      * @throws ORMException
      *
      * @template T
-     * @psalm-param class-string<T> $className
-     * @psalm-return ?T
      */
     public function find($className, $id, $lockMode = null, $lockVersion = null)
     {
@@ -471,7 +473,9 @@ use const E_USER_DEPRECATED;
             case $lockMode === LockMode::OPTIMISTIC:
                 $entity = $persister->load($sortedId);
 
-                $unitOfWork->lock($entity, $lockMode, $lockVersion);
+                if ($entity !== null) {
+                    $unitOfWork->lock($entity, $lockMode, $lockVersion);
+                }
 
                 return $entity;
 
@@ -575,9 +579,11 @@ use const E_USER_DEPRECATED;
         }
 
         if ($entityName !== null) {
-            @trigger_error(
-                'Calling ' . __METHOD__ . '() with any arguments to clear specific entities is deprecated and will not be supported in Doctrine ORM 3.0.',
-                E_USER_DEPRECATED
+            Deprecation::trigger(
+                'doctrine/orm',
+                'https://github.com/doctrine/orm/issues/8460',
+                'Calling %s() with any arguments to clear specific entities is deprecated and will not be supported in Doctrine ORM 3.0.',
+                __METHOD__
             );
         }
 
@@ -678,8 +684,6 @@ use const E_USER_DEPRECATED;
      * Entities which previously referenced the detached entity will continue to
      * reference it.
      *
-     * @deprecated 2.7 This method is being removed from the ORM and won't have any replacement
-     *
      * @param object $entity The entity to detach.
      *
      * @return void
@@ -688,8 +692,6 @@ use const E_USER_DEPRECATED;
      */
     public function detach($entity)
     {
-        @trigger_error('Method ' . __METHOD__ . '() is deprecated and will be removed in Doctrine ORM 3.0.', E_USER_DEPRECATED);
-
         if (! is_object($entity)) {
             throw ORMInvalidArgumentException::invalidObject('EntityManager#detach()', $entity);
         }
@@ -713,7 +715,12 @@ use const E_USER_DEPRECATED;
      */
     public function merge($entity)
     {
-        @trigger_error('Method ' . __METHOD__ . '() is deprecated and will be removed in Doctrine ORM 3.0.', E_USER_DEPRECATED);
+        Deprecation::trigger(
+            'doctrine/orm',
+            'https://github.com/doctrine/orm/issues/8461',
+            'Method %s() is deprecated and will be removed in Doctrine ORM 3.0.',
+            __METHOD__
+        );
 
         if (! is_object($entity)) {
             throw ORMInvalidArgumentException::invalidObject('EntityManager#merge()', $entity);
@@ -729,7 +736,12 @@ use const E_USER_DEPRECATED;
      */
     public function copy($entity, $deep = false)
     {
-        @trigger_error('Method ' . __METHOD__ . '() is deprecated and will be removed in Doctrine ORM 3.0.', E_USER_DEPRECATED);
+        Deprecation::trigger(
+            'doctrine/orm',
+            'https://github.com/doctrine/orm/issues/8462',
+            'Method %s() is deprecated and will be removed in Doctrine ORM 3.0.',
+            __METHOD__
+        );
 
         throw new BadMethodCallException('Not implemented.');
     }
@@ -746,12 +758,12 @@ use const E_USER_DEPRECATED;
      * Gets the repository for an entity class.
      *
      * @param string $entityName The name of the entity.
+     * @psalm-param class-string<T> $entityName
      *
      * @return ObjectRepository|EntityRepository The repository class.
+     * @psalm-return EntityRepository<T>
      *
      * @template T
-     * @psalm-param class-string<T> $entityName
-     * @psalm-return EntityRepository<T>
      */
     public function getRepository($entityName)
     {
@@ -791,11 +803,9 @@ use const E_USER_DEPRECATED;
     /**
      * Throws an exception if the EntityManager is closed or currently not active.
      *
-     * @return void
-     *
      * @throws ORMException If the EntityManager is closed.
      */
-    private function errorIfClosed()
+    private function errorIfClosed(): void
     {
         if ($this->closed) {
             throw ORMException::entityManagerClosed();
@@ -877,9 +887,10 @@ use const E_USER_DEPRECATED;
     /**
      * Factory method to create EntityManager instances.
      *
-     * @param array<string, mixed>|Connection $connection   An array with the connection parameters or an existing Connection instance.
-     * @param Configuration                   $config       The Configuration instance to use.
-     * @param EventManager                    $eventManager The EventManager instance to use.
+     * @param mixed[]|Connection $connection   An array with the connection parameters or an existing Connection instance.
+     * @param Configuration      $config       The Configuration instance to use.
+     * @param EventManager|null  $eventManager The EventManager instance to use.
+     * @psalm-param array<string, mixed>|Connection $connection
      *
      * @return EntityManager The created EntityManager.
      *
@@ -900,9 +911,10 @@ use const E_USER_DEPRECATED;
     /**
      * Factory method to create Connection instances.
      *
-     * @param array<string, mixed>|Connection $connection   An array with the connection parameters or an existing Connection instance.
-     * @param Configuration                   $config       The Configuration instance to use.
-     * @param EventManager                    $eventManager The EventManager instance to use.
+     * @param mixed[]|Connection $connection   An array with the connection parameters or an existing Connection instance.
+     * @param Configuration      $config       The Configuration instance to use.
+     * @param EventManager|null  $eventManager The EventManager instance to use.
+     * @psalm-param array<string, mixed>|Connection $connection
      *
      * @return Connection
      *
@@ -979,5 +991,43 @@ use const E_USER_DEPRECATED;
                     throw TransactionRequiredException::transactionRequired();
                 }
         }
+    }
+
+    private function configureMetadataCache(): void
+    {
+        $metadataCache = $this->config->getMetadataCache();
+        if (! $metadataCache) {
+            $this->configureLegacyMetadataCache();
+
+            return;
+        }
+
+        // We have a PSR-6 compatible metadata factory. Use cache directly
+        if (method_exists($this->metadataFactory, 'setCache')) {
+            $this->metadataFactory->setCache($metadataCache);
+
+            return;
+        }
+
+        // Wrap PSR-6 cache to provide doctrine/cache interface
+        $this->metadataFactory->setCacheDriver(DoctrineProvider::wrap($metadataCache));
+    }
+
+    private function configureLegacyMetadataCache(): void
+    {
+        $metadataCache = $this->config->getMetadataCacheImpl();
+        if (! $metadataCache) {
+            return;
+        }
+
+        // Metadata factory is not PSR-6 compatible. Use cache directly
+        if (! method_exists($this->metadataFactory, 'setCache')) {
+            $this->metadataFactory->setCacheDriver($metadataCache);
+
+            return;
+        }
+
+        // Wrap doctrine/cache to provide PSR-6 interface
+        $this->metadataFactory->setCache(CacheAdapter::wrap($metadataCache));
     }
 }

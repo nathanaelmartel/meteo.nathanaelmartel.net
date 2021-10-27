@@ -1,13 +1,8 @@
 <?php
 
-/**
- * @see       https://github.com/laminas/laminas-code for the canonical source repository
- * @copyright https://github.com/laminas/laminas-code/blob/master/COPYRIGHT.md
- * @license   https://github.com/laminas/laminas-code/blob/master/LICENSE.md New BSD License
- */
-
 namespace Laminas\Code\Reflection;
 
+use Laminas\Code\Reflection\DocBlock\Tag\ParamTag;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionParameter;
@@ -98,10 +93,19 @@ class ParameterReflection extends ReflectionParameter implements ReflectionInter
             return null;
         }
 
-        $params = $docBlock->getTags('param');
+        /** @var ParamTag[] $params */
+        $params       = $docBlock->getTags('param');
+        $paramTag     = $params[$this->getPosition()] ?? null;
+        $variableName = '$' . $this->getName();
 
-        if (isset($params[$this->getPosition()])) {
-            return $params[$this->getPosition()]->getType();
+        if ($paramTag && ('' === $paramTag->getVariableName() || $variableName === $paramTag->getVariableName())) {
+            return $paramTag->getTypes()[0] ?? '';
+        }
+
+        foreach ($params as $param) {
+            if ($param->getVariableName() === $variableName) {
+                return $param->getTypes()[0] ?? '';
+            }
         }
 
         return null;

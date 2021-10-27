@@ -60,9 +60,10 @@ abstract class Base
     }
 
     /**
-     * @return static
+     * @param string[]|object[]|string|object $args
+     * @psalm-param list<string|object>|string|object $args
      *
-     * @psalm-param list<string|object> $args
+     * @return static
      */
     public function addMultiple($args = [])
     {
@@ -103,6 +104,7 @@ abstract class Base
 
     /**
      * @return int
+     * @psalm-return 0|positive-int
      */
     public function count()
     {

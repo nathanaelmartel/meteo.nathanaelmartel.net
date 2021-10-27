@@ -65,7 +65,7 @@ application:
             table_storage:
                 table_name: 'doctrine_migration_versions'
                 version_column_name: 'version'
-                version_column_length: 1024
+                version_column_length: 192
                 executed_at_column_name: 'executed_at'
 
         # Possible values: "BY_YEAR", "BY_YEAR_AND_MONTH", false
@@ -80,6 +80,9 @@ application:
         # Adds an extra check in the generated migrations to ensure that is executed on the same database type.
         check_database_platform: true
 
+        # Whether or not to wrap migrations in a single transaction.
+        transactional: true
+
         services:
             # Custom migration sorting service id
             'Doctrine\Migrations\Version\Comparator': ~
@@ -90,9 +93,6 @@ application:
         factories:
             # Custom migration sorting service id via callables (MyCallableFactory must be a callable)
             'Doctrine\Migrations\Version\Comparator': 'MyCallableFactory'
-
-
-
 
 - The ``services`` node allows you to provide custom services to the underlying ``DependencyFactory`` part of ``doctrine/migrations``.
 - The node ``factories`` is similar to ``services``, with the difference that it accepts only callables.

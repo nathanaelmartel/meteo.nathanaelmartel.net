@@ -28,12 +28,12 @@ class LazyLoadingValueHolderGenerator extends BaseGenerator
         parent::generate($originalClass, $classGenerator, $proxyOptions);
 
         foreach ($classGenerator->getMethods() as $method) {
-            if (0 === strpos($originalClass->getFilename(), __FILE__)) {
+            if (str_starts_with($originalClass->getFilename(), __FILE__)) {
                 $method->setBody(str_replace(var_export($originalClass->name, true), '__CLASS__', $method->getBody()));
             }
         }
 
-        if (0 === strpos($originalClass->getFilename(), __FILE__)) {
+        if (str_starts_with($originalClass->getFilename(), __FILE__)) {
             $interfaces = $classGenerator->getImplementedInterfaces();
             array_pop($interfaces);
             $classGenerator->setImplementedInterfaces(array_merge($interfaces, $originalClass->getInterfaceNames()));
@@ -43,7 +43,7 @@ class LazyLoadingValueHolderGenerator extends BaseGenerator
     public function getProxifiedClass(Definition $definition): ?string
     {
         if (!$definition->hasTag('proxy')) {
-            return class_exists($class = $definition->getClass()) || interface_exists($class, false) ? $class : null;
+            return ($class = $definition->getClass()) && (class_exists($class) || interface_exists($class, false)) ? $class : null;
         }
         if (!$definition->isLazy()) {
             throw new \InvalidArgumentException(sprintf('Invalid definition for service of class "%s": setting the "proxy" tag on a service requires it to be "lazy".', $definition->getClass()));

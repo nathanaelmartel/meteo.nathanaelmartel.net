@@ -30,6 +30,7 @@ use Doctrine\ORM\Query\Parser;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder;
 use IteratorAggregate;
+use ReturnTypeWillChange;
 
 use function array_key_exists;
 use function array_map;
@@ -105,6 +106,7 @@ class Paginator implements Countable, IteratorAggregate
      * @param bool|null $useOutputWalkers
      *
      * @return $this
+     * @psalm-return static<T>
      */
     public function setUseOutputWalkers($useOutputWalkers)
     {
@@ -115,7 +117,10 @@ class Paginator implements Countable, IteratorAggregate
 
     /**
      * {@inheritdoc}
+     *
+     * @return int
      */
+    #[ReturnTypeWillChange]
     public function count()
     {
         if ($this->count === null) {
@@ -132,8 +137,10 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * {@inheritdoc}
      *
+     * @return ArrayIterator
      * @psalm-return ArrayIterator<array-key, T>
      */
+    #[ReturnTypeWillChange]
     public function getIterator()
     {
         $offset = $this->query->getFirstResult();
@@ -180,14 +187,7 @@ class Paginator implements Countable, IteratorAggregate
         return new ArrayIterator($result);
     }
 
-    /**
-     * Clones a query.
-     *
-     * @param Query $query The query.
-     *
-     * @return Query The cloned query.
-     */
-    private function cloneQuery(Query $query)
+    private function cloneQuery(Query $query): Query
     {
         $cloneQuery = clone $query;
 
@@ -203,12 +203,8 @@ class Paginator implements Countable, IteratorAggregate
 
     /**
      * Determines whether to use an output walker for the query.
-     *
-     * @param Query $query The query.
-     *
-     * @return bool
      */
-    private function useOutputWalker(Query $query)
+    private function useOutputWalker(Query $query): bool
     {
         if ($this->useOutputWalkers === null) {
             return (bool) $query->getHint(Query::HINT_CUSTOM_OUTPUT_WALKER) === false;
@@ -220,9 +216,9 @@ class Paginator implements Countable, IteratorAggregate
     /**
      * Appends a custom tree walker to the tree walkers hint.
      *
-     * @param string $walkerClass
+     * @psalm-param class-string $walkerClass
      */
-    private function appendTreeWalker(Query $query, $walkerClass)
+    private function appendTreeWalker(Query $query, string $walkerClass): void
     {
         $hints = $query->getHint(Query::HINT_CUSTOM_TREE_WALKERS);
 
@@ -236,10 +232,8 @@ class Paginator implements Countable, IteratorAggregate
 
     /**
      * Returns Query prepared to count.
-     *
-     * @return Query
      */
-    private function getCountQuery()
+    private function getCountQuery(): Query
     {
         $countQuery = $this->cloneQuery($this->query);
 

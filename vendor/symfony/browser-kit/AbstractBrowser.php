@@ -53,8 +53,8 @@ abstract class AbstractBrowser
     public function __construct(array $server = [], History $history = null, CookieJar $cookieJar = null)
     {
         $this->setServerParameters($server);
-        $this->history = $history ?: new History();
-        $this->cookieJar = $cookieJar ?: new CookieJar();
+        $this->history = $history ?? new History();
+        $this->cookieJar = $cookieJar ?? new CookieJar();
     }
 
     /**
@@ -158,6 +158,24 @@ abstract class AbstractBrowser
             return $this->request($method, $uri, $parameters, $files, $server, $content, $changeHistory);
         } finally {
             unset($this->server['HTTP_X_REQUESTED_WITH']);
+        }
+    }
+
+    /**
+     * Converts the request parameters into a JSON string and uses it as request content.
+     */
+    public function jsonRequest(string $method, string $uri, array $parameters = [], array $server = [], bool $changeHistory = true): Crawler
+    {
+        $content = json_encode($parameters);
+
+        $this->setServerParameter('CONTENT_TYPE', 'application/json');
+        $this->setServerParameter('HTTP_ACCEPT', 'application/json');
+
+        try {
+            return $this->request($method, $uri, [], [], $server, $content, $changeHistory);
+        } finally {
+            unset($this->server['CONTENT_TYPE']);
+            unset($this->server['HTTP_ACCEPT']);
         }
     }
 
@@ -423,7 +441,7 @@ abstract class AbstractBrowser
      *
      * @throws \RuntimeException When processing returns exit code
      */
-    protected function doRequestInProcess($request)
+    protected function doRequestInProcess(object $request)
     {
         $deprecationsFile = tempnam(sys_get_temp_dir(), 'deprec');
         putenv('SYMFONY_DEPRECATIONS_SERIALIZE='.$deprecationsFile);
@@ -458,7 +476,7 @@ abstract class AbstractBrowser
      *
      * @return object An origin response instance
      */
-    abstract protected function doRequest($request);
+    abstract protected function doRequest(object $request);
 
     /**
      * Returns the script to execute when the request must be insulated.
@@ -467,7 +485,7 @@ abstract class AbstractBrowser
      *
      * @throws \LogicException When this abstract class is not implemented
      */
-    protected function getScript($request)
+    protected function getScript(object $request)
     {
         throw new \LogicException('To insulate requests, you need to override the getScript() method.');
     }
@@ -489,7 +507,7 @@ abstract class AbstractBrowser
      *
      * @return Response An BrowserKit Response instance
      */
-    protected function filterResponse($response)
+    protected function filterResponse(object $response)
     {
         return $response;
     }
@@ -681,7 +699,7 @@ abstract class AbstractBrowser
      *
      * @return Crawler
      */
-    protected function requestFromRequest(Request $request, $changeHistory = true)
+    protected function requestFromRequest(Request $request, bool $changeHistory = true)
     {
         return $this->request($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
     }

@@ -75,7 +75,7 @@ abstract class AbstractEntityPersister implements CachedEntityPersister
     /** @var Cache */
     protected $cache;
 
-    /** @var CacheLogger */
+    /** @var CacheLogger|null */
     protected $cacheLogger;
 
     /** @var string */
@@ -226,7 +226,7 @@ abstract class AbstractEntityPersister implements CachedEntityPersister
     /**
      * @param object $entity
      */
-    private function storeJoinedAssociations($entity)
+    private function storeJoinedAssociations($entity): void
     {
         if ($this->joinedAssociations === null) {
             $associations = [];
@@ -344,7 +344,7 @@ abstract class AbstractEntityPersister implements CachedEntityPersister
      */
     public function load(array $criteria, $entity = null, $assoc = null, array $hints = [], $lockMode = null, $limit = null, ?array $orderBy = null)
     {
-        if ($entity !== null || $assoc !== null || ! empty($hints) || $lockMode !== null) {
+        if ($entity !== null || $assoc !== null || $hints !== [] || $lockMode !== null) {
             return $this->persister->load($criteria, $entity, $assoc, $hints, $lockMode, $limit, $orderBy);
         }
 

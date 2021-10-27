@@ -22,6 +22,7 @@ namespace Doctrine\ORM\Tools;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\Deprecations\Deprecation;
 use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
@@ -64,12 +65,10 @@ use function strrpos;
 use function strtolower;
 use function substr;
 use function token_get_all;
-use function trigger_error;
 use function ucfirst;
 use function var_export;
 
 use const DIRECTORY_SEPARATOR;
-use const E_USER_DEPRECATED;
 use const PHP_EOL;
 use const PHP_VERSION_ID;
 use const T_CLASS;
@@ -374,7 +373,12 @@ public function __construct(<params>)
 
     public function __construct()
     {
-        @trigger_error(self::class . ' is deprecated and will be removed in Doctrine ORM 3.0', E_USER_DEPRECATED);
+        Deprecation::trigger(
+            'doctrine/orm',
+            'https://github.com/doctrine/orm/issues/8458',
+            '%s is deprecated with no replacement',
+            self::class
+        );
 
         $this->annotationsPrefix = 'ORM\\';
         $this->inflector         = InflectorFactory::create()->build();
@@ -384,10 +388,9 @@ public function __construct(<params>)
      * Generates and writes entity classes for the given array of ClassMetadataInfo instances.
      *
      * @param string $outputDirectory
+     * @psalm-param list<ClassMetadataInfo> $metadatas
      *
      * @return void
-     *
-     * @psalm-param list<ClassMetadataInfo> $metadatas
      */
     public function generate(array $metadatas, $outputDirectory)
     {
@@ -539,12 +542,11 @@ public function __construct(<params>)
      * Sets the class fields visibility for the entity (can either be private or protected).
      *
      * @param string $visibility
+     * @psalm-param self::FIELD_VISIBLE_*
      *
      * @return void
      *
      * @throws InvalidArgumentException
-     *
-     * @psalm-param self::FIELD_VISIBLE_*
      */
     public function setFieldVisibility($visibility)
     {
@@ -559,6 +561,8 @@ public function __construct(<params>)
      * Sets whether or not to generate immutable embeddables.
      *
      * @param bool $embeddablesImmutable
+     *
+     * @return void
      */
     public function setEmbeddablesImmutable($embeddablesImmutable)
     {
@@ -743,10 +747,7 @@ public function __construct(<params>)
         return '';
     }
 
-    /**
-     * @return string
-     */
-    private function generateEmbeddableConstructor(ClassMetadataInfo $metadata)
+    private function generateEmbeddableConstructor(ClassMetadataInfo $metadata): string
     {
         $paramTypes     = [];
         $paramVariables = [];
@@ -946,10 +947,9 @@ public function __construct(<params>)
 
     /**
      * @return ReflectionClass[]
+     * @psalm-return array<trait-string, ReflectionClass<object>>
      *
      * @throws ReflectionException
-     *
-     * @psalm-return array<trait-string, ReflectionClass>
      */
     protected function getTraits(ClassMetadataInfo $metadata)
     {
@@ -1115,10 +1115,9 @@ public function __construct(<params>)
 
     /**
      * @param string $constraintName
+     * @psalm-param array<string, array<string, mixed>> $constraints
      *
      * @return string
-     *
-     * @psalm-param array<string, array<string, mixed>> $constraints
      */
     protected function generateTableConstraints($constraintName, array $constraints)
     {
@@ -1286,9 +1285,9 @@ public function __construct(<params>)
     }
 
     /**
-     * @return bool
-     *
      * @psalm-param array<string, mixed> $associationMapping
+     *
+     * @return bool
      */
     protected function isAssociationIsNullable(array $associationMapping)
     {
@@ -1432,7 +1431,7 @@ public function __construct(<params>)
         $var      = sprintf('%sMethodTemplate', $type);
         $template = static::$$var;
 
-        $methodTypeHint = null;
+        $methodTypeHint = '';
         $types          = Type::getTypesMap();
         $variableType   = $typeHint ? $this->getType($typeHint) : null;
 
@@ -1490,9 +1489,9 @@ public function __construct(<params>)
     }
 
     /**
-     * @return string
-     *
      * @psalm-param array<string, mixed> $joinColumn
+     *
+     * @return string
      */
     protected function generateJoinColumnAnnotation(array $joinColumn)
     {
@@ -1812,9 +1811,9 @@ public function __construct(<params>)
     }
 
     /**
-     * @return string
-     *
      * @psalm-param array<string, mixed> $embeddedClass
+     *
+     * @return string
      */
     protected function generateEmbeddedPropertyDocBlock(array $embeddedClass)
     {
@@ -1876,7 +1875,7 @@ public function __construct(<params>)
         $lines = explode("\n", $code);
 
         foreach ($lines as $key => $value) {
-            if (! empty($value)) {
+            if ($value !== '') {
                 $lines[$key] = str_repeat($this->spaces, $num) . $lines[$key];
             }
         }

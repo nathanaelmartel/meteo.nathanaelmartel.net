@@ -1,11 +1,5 @@
 <?php
 
-/**
- * @see       https://github.com/laminas/laminas-code for the canonical source repository
- * @copyright https://github.com/laminas/laminas-code/blob/master/COPYRIGHT.md
- * @license   https://github.com/laminas/laminas-code/blob/master/LICENSE.md New BSD License
- */
-
 namespace Laminas\Code\Generator;
 
 use Laminas\Code\Reflection\ParameterReflection;
@@ -200,6 +194,10 @@ class ParameterGenerator extends AbstractGenerator
      */
     public function setDefaultValue($defaultValue)
     {
+        if ($this->variadic) {
+            throw new Exception\InvalidArgumentException('Variadic parameter cannot have a default value');
+        }
+
         if (! $defaultValue instanceof ValueGenerator) {
             $defaultValue = new ValueGenerator($defaultValue);
         }
@@ -258,6 +256,10 @@ class ParameterGenerator extends AbstractGenerator
      */
     public function setVariadic($variadic)
     {
+        if (isset($this->defaultValue)) {
+            throw new Exception\InvalidArgumentException('Variadic parameter cannot have a default value');
+        }
+
         $this->variadic = (bool) $variadic;
 
         return $this;

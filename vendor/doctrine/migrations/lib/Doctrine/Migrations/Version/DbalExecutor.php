@@ -254,7 +254,7 @@ final class DbalExecutor implements Executor
         $migration = $plan->getMigration();
         if ($migration->isTransactional()) {
             //only rollback transaction if in transactional mode
-            $this->connection->rollBack();
+            TransactionHelper::rollbackIfInTransaction($this->connection);
         }
 
         $plan->markAsExecuted($result);
@@ -270,7 +270,7 @@ final class DbalExecutor implements Executor
     private function logResult(Throwable $e, ExecutionResult $result, MigrationPlan $plan): void
     {
         if ($result->isSkipped()) {
-            $this->logger->error(
+            $this->logger->notice(
                 'Migration {version} skipped during {state}. Reason: "{reason}"',
                 [
                     'version' => (string) $plan->getVersion(),

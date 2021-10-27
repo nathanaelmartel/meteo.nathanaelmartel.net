@@ -115,6 +115,8 @@ class ConvertDoctrine1SchemaCommand extends Command
 
     /**
      * {@inheritdoc}
+     *
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -142,6 +144,8 @@ class ConvertDoctrine1SchemaCommand extends Command
      * @param string      $toType
      * @param int         $numSpaces
      * @param string|null $extend
+     *
+     * @return void
      *
      * @throws InvalidArgumentException
      */

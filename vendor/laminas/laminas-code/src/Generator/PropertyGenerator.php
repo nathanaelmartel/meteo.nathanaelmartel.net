@@ -1,11 +1,5 @@
 <?php
 
-/**
- * @see       https://github.com/laminas/laminas-code for the canonical source repository
- * @copyright https://github.com/laminas/laminas-code/blob/master/COPYRIGHT.md
- * @license   https://github.com/laminas/laminas-code/blob/master/LICENSE.md New BSD License
- */
-
 namespace Laminas\Code\Generator;
 
 use Laminas\Code\Reflection\PropertyReflection;
@@ -35,7 +29,7 @@ class PropertyGenerator extends AbstractMemberGenerator
 
         $allDefaultProperties = $reflectionProperty->getDeclaringClass()->getDefaultProperties();
 
-        $defaultValue = $allDefaultProperties[$reflectionProperty->getName()];
+        $defaultValue = $allDefaultProperties[$reflectionProperty->getName()] ?? null;
         $property->setDefaultValue($defaultValue);
         if ($defaultValue === null) {
             $property->omitDefaultValue = true;

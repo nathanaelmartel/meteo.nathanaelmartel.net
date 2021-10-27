@@ -2,15 +2,18 @@
 
 namespace Gedmo\Mapping;
 
+use function class_exists;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Annotations\PsrCachedReader;
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\Psr6\CacheAdapter;
 use Doctrine\Common\EventArgs;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\Persistence\ObjectManager;
 use Gedmo\Mapping\Event\AdapterInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
  * This is extension of event subscriber class and is
@@ -224,7 +227,13 @@ abstract class MappedEventSubscriber implements EventSubscriber
         if (null === self::$defaultAnnotationReader) {
             AnnotationRegistry::registerAutoloadNamespace('Gedmo\\Mapping\\Annotation', __DIR__.'/../../');
 
-            $reader = new CachedReader(new AnnotationReader(), new ArrayCache());
+            $reader = new AnnotationReader();
+
+            if (class_exists(ArrayAdapter::class)) {
+                $reader = new PsrCachedReader($reader, new ArrayAdapter());
+            } elseif (class_exists(ArrayCache::class)) {
+                $reader = new PsrCachedReader($reader, CacheAdapter::wrap(new ArrayCache()));
+            }
 
             self::$defaultAnnotationReader = $reader;
         }

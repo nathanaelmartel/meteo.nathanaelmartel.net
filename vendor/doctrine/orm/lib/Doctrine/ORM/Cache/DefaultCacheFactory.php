@@ -70,6 +70,8 @@ class DefaultCacheFactory implements CacheFactory
 
     /**
      * @param string $fileLockRegionDirectory
+     *
+     * @return void
      */
     public function setFileLockRegionDirectory($fileLockRegionDirectory)
     {
@@ -84,11 +86,17 @@ class DefaultCacheFactory implements CacheFactory
         return $this->fileLockRegionDirectory;
     }
 
+    /**
+     * @return void
+     */
     public function setRegion(Region $region)
     {
         $this->regions[$region->getName()] = $region;
     }
 
+    /**
+     * @return void
+     */
     public function setTimestampRegion(TimestampRegion $region)
     {
         $this->timestampRegion = $region;
@@ -111,6 +119,10 @@ class DefaultCacheFactory implements CacheFactory
         }
 
         if ($usage === ClassMetadata::CACHE_USAGE_READ_WRITE) {
+            if (! $region instanceof ConcurrentRegion) {
+                throw new InvalidArgumentException(sprintf('Unable to use access strategy type of [%s] without a ConcurrentRegion', $usage));
+            }
+
             return new ReadWriteCachedEntityPersister($persister, $region, $em, $metadata);
         }
 
@@ -134,6 +146,10 @@ class DefaultCacheFactory implements CacheFactory
         }
 
         if ($usage === ClassMetadata::CACHE_USAGE_READ_WRITE) {
+            if (! $region instanceof ConcurrentRegion) {
+                throw new InvalidArgumentException(sprintf('Unable to use access strategy type of [%s] without a ConcurrentRegion', $usage));
+            }
+
             return new ReadWriteCachedCollectionPersister($persister, $region, $em, $mapping);
         }
 
@@ -201,18 +217,13 @@ class DefaultCacheFactory implements CacheFactory
             }
 
             $directory = $this->fileLockRegionDirectory . DIRECTORY_SEPARATOR . $cache['region'];
-            $region    = new FileLockRegion($region, $directory, $this->regionsConfig->getLockLifetime($cache['region']));
+            $region    = new FileLockRegion($region, $directory, (string) $this->regionsConfig->getLockLifetime($cache['region']));
         }
 
         return $this->regions[$cache['region']] = $region;
     }
 
-    /**
-     * @param string $name
-     *
-     * @return CacheAdapter
-     */
-    private function createRegionCache($name)
+    private function createRegionCache(string $name): CacheAdapter
     {
         $cacheAdapter = clone $this->cache;
 

@@ -1,11 +1,5 @@
 <?php
 
-/**
- * @see       https://github.com/laminas/laminas-code for the canonical source repository
- * @copyright https://github.com/laminas/laminas-code/blob/master/COPYRIGHT.md
- * @license   https://github.com/laminas/laminas-code/blob/master/LICENSE.md New BSD License
- */
-
 namespace Laminas\Code\Generator;
 
 use Laminas\Code\Reflection\MethodReflection;
@@ -21,6 +15,7 @@ use function strlen;
 use function strtolower;
 use function substr;
 use function trim;
+use function uasort;
 
 class MethodGenerator extends AbstractMemberGenerator
 {
@@ -222,6 +217,8 @@ class MethodGenerator extends AbstractMemberGenerator
             $this->setParameter($parameter);
         }
 
+        $this->sortParameters();
+
         return $this;
     }
 
@@ -249,6 +246,8 @@ class MethodGenerator extends AbstractMemberGenerator
         }
 
         $this->parameters[$parameter->getName()] = $parameter;
+
+        $this->sortParameters();
 
         return $this;
     }
@@ -309,6 +308,16 @@ class MethodGenerator extends AbstractMemberGenerator
         $this->returnsReference = (bool) $returnsReference;
 
         return $this;
+    }
+
+    /**
+     * Sort parameters by their position
+     */
+    private function sortParameters(): void
+    {
+        uasort($this->parameters, static function (ParameterGenerator $item1, ParameterGenerator $item2) {
+            return $item1->getPosition() <=> $item2->getPosition();
+        });
     }
 
     /**

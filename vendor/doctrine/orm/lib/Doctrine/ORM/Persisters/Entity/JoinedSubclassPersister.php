@@ -34,7 +34,7 @@ use function is_array;
  * The joined subclass persister maps a single entity instance to several tables in the
  * database as it is defined by the <tt>Class Table Inheritance</tt> strategy.
  *
- * @see http://martinfowler.com/eaaCatalog/classTableInheritance.html
+ * @see https://martinfowler.com/eaaCatalog/classTableInheritance.html
  */
 class JoinedSubclassPersister extends AbstractEntityInheritancePersister
 {
@@ -68,10 +68,8 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     /**
      * This function finds the ClassMetadata instance in an inheritance hierarchy
      * that is responsible for enabling versioning.
-     *
-     * @return ClassMetadata
      */
-    private function getVersionedClassMetadata()
+    private function getVersionedClassMetadata(): ClassMetadata
     {
         if (isset($this->class->fieldMappings[$this->class->versionField]['inherited'])) {
             $definingClassName = $this->class->fieldMappings[$this->class->versionField]['inherited'];
@@ -194,14 +192,14 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
                 $paramIndex = 1;
                 $data       = $insertData[$tableName] ?? [];
 
-                foreach ((array) $id as $idName => $idVal) {
+                foreach ($id as $idName => $idVal) {
                     $type = $this->columnTypes[$idName] ?? Type::STRING;
 
                     $stmt->bindValue($paramIndex++, $idVal, $type);
                 }
 
                 foreach ($data as $columnName => $value) {
-                    if (! is_array($id) || ! isset($id[$columnName])) {
+                    if (! isset($id[$columnName])) {
                         $stmt->bindValue($paramIndex++, $value, $this->columnTypes[$columnName]);
                     }
                 }
@@ -576,12 +574,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
         $this->class->setFieldValue($entity, $this->class->versionField, $value);
     }
 
-    /**
-     * @param string $baseTableAlias
-     *
-     * @return string
-     */
-    private function getJoinSql($baseTableAlias)
+    private function getJoinSql(string $baseTableAlias): string
     {
         $joinSql          = '';
         $identifierColumn = $this->class->getIdentifierColumnNames();

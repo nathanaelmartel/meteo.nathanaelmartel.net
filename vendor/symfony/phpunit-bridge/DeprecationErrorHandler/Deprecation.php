@@ -13,24 +13,27 @@ namespace Symfony\Bridge\PhpUnit\DeprecationErrorHandler;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\TestSuite;
+use PHPUnit\Metadata\Api\Groups;
 use PHPUnit\Util\Test;
 use Symfony\Bridge\PhpUnit\Legacy\SymfonyTestsListenerFor;
 use Symfony\Component\Debug\DebugClassLoader as LegacyDebugClassLoader;
 use Symfony\Component\ErrorHandler\DebugClassLoader;
+
+class_exists(Groups::class);
 
 /**
  * @internal
  */
 class Deprecation
 {
-    const PATH_TYPE_VENDOR = 'path_type_vendor';
-    const PATH_TYPE_SELF = 'path_type_internal';
-    const PATH_TYPE_UNDETERMINED = 'path_type_undetermined';
+    public const PATH_TYPE_VENDOR = 'path_type_vendor';
+    public const PATH_TYPE_SELF = 'path_type_internal';
+    public const PATH_TYPE_UNDETERMINED = 'path_type_undetermined';
 
-    const TYPE_SELF = 'type_self';
-    const TYPE_DIRECT = 'type_direct';
-    const TYPE_INDIRECT = 'type_indirect';
-    const TYPE_UNDETERMINED = 'type_undetermined';
+    public const TYPE_SELF = 'type_self';
+    public const TYPE_DIRECT = 'type_direct';
+    public const TYPE_INDIRECT = 'type_indirect';
+    public const TYPE_UNDETERMINED = 'type_undetermined';
 
     private $trace = [];
     private $message;
@@ -126,7 +129,7 @@ class Deprecation
             return;
         }
 
-        $test = isset($line['args'][0]) ? $line['args'][0] : null;
+        $test = $line['args'][0] ?? null;
 
         if (($test instanceof TestCase || $test instanceof TestSuite) && ('trigger_error' !== $trace[$i - 2]['function'] || isset($trace[$i - 2]['class']))) {
             $this->originClass = \get_class($test);
@@ -146,7 +149,7 @@ class Deprecation
         }
         $class = $line['class'];
 
-        return 'ReflectionMethod' === $class || 0 === strpos($class, 'PHPUnit_') || 0 === strpos($class, 'PHPUnit\\');
+        return 'ReflectionMethod' === $class || 0 === strpos($class, 'PHPUnit\\');
     }
 
     /**
@@ -201,12 +204,13 @@ class Deprecation
         }
 
         $method = $this->originatingMethod();
+        $groups = class_exists(Groups::class, false) ? [new Groups(), 'groups'] : [Test::class, 'getGroups'];
 
         return 0 === strpos($method, 'testLegacy')
             || 0 === strpos($method, 'provideLegacy')
             || 0 === strpos($method, 'getLegacy')
             || strpos($this->originClass, '\Legacy')
-            || \in_array('legacy', Test::getGroups($this->originClass, $method), true);
+            || \in_array('legacy', $groups($this->originClass, $method), true);
     }
 
     /**
@@ -322,7 +326,7 @@ class Deprecation
             foreach (get_declared_classes() as $class) {
                 if ('C' === $class[0] && 0 === strpos($class, 'ComposerAutoloaderInit')) {
                     $r = new \ReflectionClass($class);
-                    $v = \dirname(\dirname($r->getFileName()));
+                    $v = \dirname($r->getFileName(), 2);
                     if (file_exists($v.'/composer/installed.json')) {
                         self::$vendors[] = $v;
                         $loader = require $v.'/autoload.php';

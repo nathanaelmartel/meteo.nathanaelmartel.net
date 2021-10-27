@@ -21,6 +21,7 @@
 namespace Doctrine\ORM\Event;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\PersistentCollection;
 use InvalidArgumentException;
 
 use function get_class;
@@ -31,12 +32,13 @@ use function sprintf;
  */
 class PreUpdateEventArgs extends LifecycleEventArgs
 {
-    /** @var array<string,array<int,mixed>> */
+    /** @var array<string, array{mixed, mixed}|PersistentCollection> */
     private $entityChangeSet;
 
     /**
-     * @param object                         $entity
-     * @param array<string,array<int,mixed>> $changeSet
+     * @param object    $entity
+     * @param mixed[][] $changeSet
+     * @psalm-param array<string, array{mixed, mixed}|PersistentCollection> $changeSet
      */
     public function __construct($entity, EntityManagerInterface $em, array &$changeSet)
     {
@@ -48,7 +50,8 @@ class PreUpdateEventArgs extends LifecycleEventArgs
     /**
      * Retrieves entity changeset.
      *
-     * @return array<string,array<int,mixed>>
+     * @return mixed[][]
+     * @psalm-return array<string, array{mixed, mixed}|PersistentCollection>
      */
     public function getEntityChangeSet()
     {
@@ -113,13 +116,9 @@ class PreUpdateEventArgs extends LifecycleEventArgs
     /**
      * Asserts the field exists in changeset.
      *
-     * @param string $field
-     *
-     * @return void
-     *
      * @throws InvalidArgumentException
      */
-    private function assertValidField($field)
+    private function assertValidField(string $field): void
     {
         if (! isset($this->entityChangeSet[$field])) {
             throw new InvalidArgumentException(sprintf(

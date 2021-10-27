@@ -52,6 +52,7 @@ class Expr
      * @param Expr\Comparison|Expr\Func|Expr\Andx|Expr\Orx|string $x Optional clause. Defaults to null,
      *                                                               but requires at least one defined
      *                                                               when converting to string.
+     * @psalm-param Expr\Comparison|Expr\Func|Expr\Andx|Expr\Orx|string ...$x
      *
      * @return Expr\Andx
      */
@@ -72,6 +73,7 @@ class Expr
      * @param Expr\Comparison|Expr\Func|Expr\Andx|Expr\Orx|string $x Optional clause. Defaults to null,
      *                                                               but requires at least one defined
      *                                                               when converting to string.
+     * @psalm-param Expr\Comparison|Expr\Func|Expr\Andx|Expr\Orx|string ...$x
      *
      * @return Expr\Orx
      */
@@ -349,6 +351,17 @@ class Expr
     public function abs($x)
     {
         return new Expr\Func('ABS', [$x]);
+    }
+
+    /**
+     * Creates a MOD($x, $y) function expression to return the remainder of $x divided by $y.
+     *
+     * @param mixed $x
+     * @param mixed $y
+     */
+    public function mod($x, $y): Expr\Func
+    {
+        return new Expr\Func('MOD', [$x, $y]);
     }
 
     /**

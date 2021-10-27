@@ -23,9 +23,9 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class MakeCommandRegistrationPass implements CompilerPassInterface
 {
-    const MAKER_TAG = 'maker.command';
+    public const MAKER_TAG = 'maker.command';
 
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         foreach ($container->findTaggedServiceIds(self::MAKER_TAG) as $id => $tags) {
             $def = $container->getDefinition($id);

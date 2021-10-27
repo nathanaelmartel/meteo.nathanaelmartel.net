@@ -19,17 +19,17 @@ class LoggableListener extends MappedEventSubscriber
     /**
      * Create action
      */
-    const ACTION_CREATE = 'create';
+    public const ACTION_CREATE = 'create';
 
     /**
      * Update action
      */
-    const ACTION_UPDATE = 'update';
+    public const ACTION_UPDATE = 'update';
 
     /**
      * Remove action
      */
-    const ACTION_REMOVE = 'remove';
+    public const ACTION_REMOVE = 'remove';
 
     /**
      * Username for identification
@@ -68,6 +68,8 @@ class LoggableListener extends MappedEventSubscriber
     {
         if (is_string($username)) {
             $this->username = $username;
+        } elseif (is_object($username) && method_exists($username, 'getUserIdentifier')) {
+            $this->username = (string) $username->getUserIdentifier();
         } elseif (is_object($username) && method_exists($username, 'getUsername')) {
             $this->username = (string) $username->getUsername();
         } else {

@@ -11,8 +11,6 @@
 
 namespace Symfony\Bundle\MakerBundle\DependencyInjection\CompilerPass;
 
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Doctrine\Persistence\Mapping\Driver\AnnotationDriver as AbstractAnnotationDriver;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -20,7 +18,7 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class SetDoctrineAnnotatedPrefixesPass implements CompilerPassInterface
 {
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $annotatedPrefixes = null;
 
@@ -49,20 +47,15 @@ class SetDoctrineAnnotatedPrefixesPass implements CompilerPassInterface
                     $class = $arguments[0]->getClass();
                     $namespace = substr($class, 0, strrpos($class, '\\'));
 
-                    if ('Doctrine\ORM\Mapping\Driver' === $namespace ? AnnotationDriver::class !== $class : !is_subclass_of($class, AbstractAnnotationDriver::class)) {
-                        continue;
-                    }
-
-                    $id = sprintf('.%d_annotation_metadata_driver~%s', $i, ContainerBuilder::hash($arguments));
+                    $id = sprintf('.%d_doctrine_metadata_driver~%s', $i, ContainerBuilder::hash($arguments));
                     $container->setDefinition($id, $arguments[0]);
                     $arguments[0] = new Reference($id);
-                    $methodCalls[$i] = $arguments;
+                    $methodCalls[$i] = [$method, $arguments];
                 }
 
-                $isAnnotated = false !== strpos($arguments[0], '_annotation_metadata_driver');
                 $annotatedPrefixes[$managerName][] = [
                     $arguments[1],
-                    $isAnnotated ? new Reference($arguments[0]) : null,
+                    new Reference($arguments[0]),
                 ];
             }
 
@@ -70,7 +63,7 @@ class SetDoctrineAnnotatedPrefixesPass implements CompilerPassInterface
         }
 
         if (null !== $annotatedPrefixes) {
-            $container->getDefinition('maker.doctrine_helper')->setArgument(2, $annotatedPrefixes);
+            $container->getDefinition('maker.doctrine_helper')->setArgument(4, $annotatedPrefixes);
         }
     }
 }

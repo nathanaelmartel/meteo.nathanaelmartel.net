@@ -20,22 +20,28 @@
 
 namespace Doctrine\ORM\Mapping;
 
+use Attribute;
+use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+use Doctrine\Deprecations\Deprecation;
+
 /**
  * @Annotation
+ * @NamedArgumentConstructor()
  * @Target("PROPERTY")
  */
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class ManyToMany implements Annotation
 {
-    /** @var string */
+    /** @var string|null */
     public $targetEntity;
 
-    /** @var string */
+    /** @var string|null */
     public $mappedBy;
 
-    /** @var string */
+    /** @var string|null */
     public $inversedBy;
 
-    /** @var array<string> */
+    /** @var string[]|null */
     public $cascade;
 
     /**
@@ -49,6 +55,35 @@ final class ManyToMany implements Annotation
     /** @var bool */
     public $orphanRemoval = false;
 
-    /** @var string */
+    /** @var string|null */
     public $indexBy;
+
+    /**
+     * @param string[]|null $cascade
+     */
+    public function __construct(
+        ?string $targetEntity = null,
+        ?string $mappedBy = null,
+        ?string $inversedBy = null,
+        ?array $cascade = null,
+        string $fetch = 'LAZY',
+        bool $orphanRemoval = false,
+        ?string $indexBy = null
+    ) {
+        if ($targetEntity === null) {
+            Deprecation::trigger(
+                'doctrine/orm',
+                'https://github.com/doctrine/orm/issues/8753',
+                'Passing no target entity is deprecated.'
+            );
+        }
+
+        $this->targetEntity  = $targetEntity;
+        $this->mappedBy      = $mappedBy;
+        $this->inversedBy    = $inversedBy;
+        $this->cascade       = $cascade;
+        $this->fetch         = $fetch;
+        $this->orphanRemoval = $orphanRemoval;
+        $this->indexBy       = $indexBy;
+    }
 }

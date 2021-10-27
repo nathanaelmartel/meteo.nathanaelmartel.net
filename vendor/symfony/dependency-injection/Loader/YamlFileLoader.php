@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Argument\AbstractArgument;
 use Symfony\Component\DependencyInjection\Argument\ArgumentInterface;
 use Symfony\Component\DependencyInjection\Argument\BoundArgument;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -129,6 +130,26 @@ class YamlFileLoader extends FileLoader
             return;
         }
 
+        $this->loadContent($content, $path);
+
+        // per-env configuration
+        if ($this->env && isset($content['when@'.$this->env])) {
+            if (!\is_array($content['when@'.$this->env])) {
+                throw new InvalidArgumentException(sprintf('The "when@%s" key should contain an array in "%s". Check your YAML syntax.', $this->env, $path));
+            }
+
+            $env = $this->env;
+            $this->env = null;
+            try {
+                $this->loadContent($content['when@'.$env], $path);
+            } finally {
+                $this->env = $env;
+            }
+        }
+    }
+
+    private function loadContent(array $content, string $path)
+    {
         // imports
         $this->parseImports($content, $path);
 
@@ -221,7 +242,7 @@ class YamlFileLoader extends FileLoader
                 if (!$service || !\is_array($service)) {
                     throw new InvalidArgumentException(sprintf('Type definition "%s" must be a non-empty array within "_instanceof" in "%s". Check your YAML syntax.', $id, $file));
                 }
-                if (\is_string($service) && 0 === strpos($service, '@')) {
+                if (\is_string($service) && str_starts_with($service, '@')) {
                     throw new InvalidArgumentException(sprintf('Type definition "%s" cannot be an alias within "_instanceof" in "%s". Check your YAML syntax.', $id, $file));
                 }
                 $this->parseDefinition($id, $service, $file, []);
@@ -305,7 +326,7 @@ class YamlFileLoader extends FileLoader
     private function isUsingShortSyntax(array $service): bool
     {
         foreach ($service as $key => $value) {
-            if (\is_string($key) && ('' === $key || ('$' !== $key[0] && false === strpos($key, '\\')))) {
+            if (\is_string($key) && ('' === $key || ('$' !== $key[0] && !str_contains($key, '\\')))) {
                 return false;
             }
         }
@@ -326,7 +347,7 @@ class YamlFileLoader extends FileLoader
             throw new InvalidArgumentException(sprintf('Service names that start with an underscore are reserved. Rename the "%s" service or define it in XML instead.', $id));
         }
 
-        if (\is_string($service) && 0 === strpos($service, '@')) {
+        if (\is_string($service) && str_starts_with($service, '@')) {
             $alias = new Alias(substr($service, 1));
 
             if (isset($defaults['public'])) {
@@ -389,6 +410,9 @@ class YamlFileLoader extends FileLoader
             ];
         }
 
+        $definition = isset($service[0]) && $service[0] instanceof Definition ? array_shift($service) : null;
+        $return = null === $definition ? $return : true;
+
         $this->checkDefinition($id, $service, $file);
 
         if (isset($service['alias'])) {
@@ -423,7 +447,9 @@ class YamlFileLoader extends FileLoader
             return $return ? $alias : $this->container->setAlias($id, $alias);
         }
 
-        if ($this->isLoadingInstanceof) {
+        if (null !== $definition) {
+            // no-op
+        } elseif ($this->isLoadingInstanceof) {
             $definition = new ChildDefinition('');
         } elseif (isset($service['parent'])) {
             if ('' !== $service['parent'] && '@' === $service['parent'][0]) {
@@ -627,7 +653,8 @@ class YamlFileLoader extends FileLoader
 
         if (isset($defaults['bind']) || isset($service['bind'])) {
             // deep clone, to avoid multiple process of the same instance in the passes
-            $bindings = isset($defaults['bind']) ? unserialize(serialize($defaults['bind'])) : [];
+            $bindings = $definition->getBindings();
+            $bindings += isset($defaults['bind']) ? unserialize(serialize($defaults['bind'])) : [];
 
             if (isset($service['bind'])) {
                 if (!\is_array($service['bind'])) {
@@ -687,7 +714,7 @@ class YamlFileLoader extends FileLoader
     {
         if (\is_string($callable)) {
             if ('' !== $callable && '@' === $callable[0]) {
-                if (false === strpos($callable, ':')) {
+                if (!str_contains($callable, ':')) {
                     return [$this->resolveServices($callable, $file), '__invoke'];
                 }
 
@@ -715,13 +742,11 @@ class YamlFileLoader extends FileLoader
     /**
      * Loads a YAML file.
      *
-     * @param string $file
-     *
      * @return array The file content
      *
      * @throws InvalidArgumentException when the given file is not a local file or when it does not exist
      */
-    protected function loadFile($file)
+    protected function loadFile(string $file)
     {
         if (!class_exists(\Symfony\Component\Yaml\Parser::class)) {
             throw new RuntimeException('Unable to load YAML config files as the Symfony Yaml Component is not installed.');
@@ -764,7 +789,7 @@ class YamlFileLoader extends FileLoader
         }
 
         foreach ($content as $namespace => $data) {
-            if (\in_array($namespace, ['imports', 'parameters', 'services'])) {
+            if (\in_array($namespace, ['imports', 'parameters', 'services']) || 0 === strpos($namespace, 'when@')) {
                 continue;
             }
 
@@ -796,6 +821,15 @@ class YamlFileLoader extends FileLoader
                 } catch (InvalidArgumentException $e) {
                     throw new InvalidArgumentException(sprintf('"!iterator" tag only accepts arrays of "@service" references in "%s".', $file));
                 }
+            }
+            if ('service_closure' === $value->getTag()) {
+                $argument = $this->resolveServices($argument, $file, $isParameter);
+
+                if (!$argument instanceof Reference) {
+                    throw new InvalidArgumentException(sprintf('"!service_closure" tag only accepts service references in "%s".', $file));
+                }
+
+                return new ServiceClosureArgument($argument);
             }
             if ('service_locator' === $value->getTag()) {
                 if (!\is_array($argument)) {
@@ -866,20 +900,20 @@ class YamlFileLoader extends FileLoader
             foreach ($value as $k => $v) {
                 $value[$k] = $this->resolveServices($v, $file, $isParameter);
             }
-        } elseif (\is_string($value) && 0 === strpos($value, '@=')) {
+        } elseif (\is_string($value) && str_starts_with($value, '@=')) {
             if (!class_exists(Expression::class)) {
                 throw new \LogicException('The "@=" expression syntax cannot be used without the ExpressionLanguage component. Try running "composer require symfony/expression-language".');
             }
 
             return new Expression(substr($value, 2));
-        } elseif (\is_string($value) && 0 === strpos($value, '@')) {
-            if (0 === strpos($value, '@@')) {
+        } elseif (\is_string($value) && str_starts_with($value, '@')) {
+            if (str_starts_with($value, '@@')) {
                 $value = substr($value, 1);
                 $invalidBehavior = null;
-            } elseif (0 === strpos($value, '@!')) {
+            } elseif (str_starts_with($value, '@!')) {
                 $value = substr($value, 2);
                 $invalidBehavior = ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE;
-            } elseif (0 === strpos($value, '@?')) {
+            } elseif (str_starts_with($value, '@?')) {
                 $value = substr($value, 2);
                 $invalidBehavior = ContainerInterface::IGNORE_ON_INVALID_REFERENCE;
             } else {
@@ -895,13 +929,10 @@ class YamlFileLoader extends FileLoader
         return $value;
     }
 
-    /**
-     * Loads from Extensions.
-     */
     private function loadFromExtensions(array $content)
     {
         foreach ($content as $namespace => $values) {
-            if (\in_array($namespace, ['imports', 'parameters', 'services'])) {
+            if (\in_array($namespace, ['imports', 'parameters', 'services']) || 0 === strpos($namespace, 'when@')) {
                 continue;
             }
 
@@ -913,9 +944,6 @@ class YamlFileLoader extends FileLoader
         }
     }
 
-    /**
-     * Checks the keywords used to define a service.
-     */
     private function checkDefinition(string $id, array $definition, string $file)
     {
         if ($this->isLoadingInstanceof) {

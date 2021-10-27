@@ -19,3 +19,8 @@
 ###< symfony/web-server-bundle ###
 
 /templates/scss/.sass-cache/
+
+###> phpunit/phpunit ###
+/phpunit.xml
+.phpunit.result.cache
+###< phpunit/phpunit ###

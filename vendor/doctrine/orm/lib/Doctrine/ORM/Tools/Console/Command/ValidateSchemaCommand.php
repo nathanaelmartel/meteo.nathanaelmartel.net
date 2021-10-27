@@ -21,7 +21,6 @@
 namespace Doctrine\ORM\Tools\Console\Command;
 
 use Doctrine\ORM\Tools\SchemaValidator;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -34,7 +33,7 @@ use function sprintf;
  *
  * @link        www.doctrine-project.com
  */
-class ValidateSchemaCommand extends Command
+class ValidateSchemaCommand extends AbstractEntityManagerCommand
 {
     /**
      * {@inheritdoc}
@@ -43,6 +42,7 @@ class ValidateSchemaCommand extends Command
     {
         $this->setName('orm:validate-schema')
              ->setDescription('Validate the mapping files')
+             ->addOption('em', null, InputOption::VALUE_REQUIRED, 'Name of the entity manager to operate on')
              ->addOption('skip-mapping', null, InputOption::VALUE_NONE, 'Skip the mapping validation check')
              ->addOption('skip-sync', null, InputOption::VALUE_NONE, 'Skip checking if the mapping is in sync with the database')
              ->setHelp('Validate that the mapping files are correct and in sync with the database.');
@@ -50,12 +50,14 @@ class ValidateSchemaCommand extends Command
 
     /**
      * {@inheritdoc}
+     *
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $ui = new SymfonyStyle($input, $output);
 
-        $em        = $this->getHelper('em')->getEntityManager();
+        $em        = $this->getEntityManager($input);
         $validator = new SchemaValidator($em);
         $exit      = 0;
 

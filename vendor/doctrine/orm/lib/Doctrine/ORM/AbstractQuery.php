@@ -24,7 +24,8 @@ use Countable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Cache\QueryCacheProfile;
-use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Driver\ResultStatement;
+use Doctrine\Deprecations\Deprecation;
 use Doctrine\ORM\Cache\Logging\CacheLogger;
 use Doctrine\ORM\Cache\QueryCacheKey;
 use Doctrine\ORM\Cache\TimestampCacheKey;
@@ -49,9 +50,6 @@ use function ksort;
 use function reset;
 use function serialize;
 use function sha1;
-use function trigger_error;
-
-use const E_USER_DEPRECATED;
 
 /**
  * Base contract for ORM queries. Base class for Query and NativeQuery.
@@ -123,7 +121,7 @@ abstract class AbstractQuery
      */
     protected $_hydrationMode = self::HYDRATE_OBJECT;
 
-    /** @var QueryCacheProfile */
+    /** @var QueryCacheProfile|null */
     protected $_queryCacheProfile;
 
     /**
@@ -289,7 +287,7 @@ abstract class AbstractQuery
     /**
      * Retrieves the associated EntityManager of this Query instance.
      *
-     * @return EntityManager
+     * @return EntityManagerInterface
      */
     public function getEntityManager()
     {
@@ -314,6 +312,7 @@ abstract class AbstractQuery
      * Get all defined parameters.
      *
      * @return ArrayCollection The defined query parameters.
+     * @psalm-return ArrayCollection<int, Parameter>
      */
     public function getParameters()
     {
@@ -325,7 +324,7 @@ abstract class AbstractQuery
      *
      * @param mixed $key The key (index or name) of the bound parameter.
      *
-     * @return Query\Parameter|null The value of the bound parameter, or NULL if not available.
+     * @return Parameter|null The value of the bound parameter, or NULL if not available.
      */
     public function getParameter($key)
     {
@@ -346,10 +345,9 @@ abstract class AbstractQuery
      * Sets a collection of query parameters.
      *
      * @param ArrayCollection|mixed[] $parameters
+     * @psalm-param ArrayCollection<int, Parameter>|mixed[] $parameters
      *
      * @return static This query instance.
-     *
-     * @psalm-param ArrayCollection<int, Parameter>|mixed[] $parameters
      */
     public function setParameters($parameters)
     {
@@ -402,10 +400,9 @@ abstract class AbstractQuery
      * @param mixed $value
      *
      * @return mixed[]|string|int|float|bool
+     * @psalm-return array|scalar
      *
      * @throws ORMInvalidArgumentException
-     *
-     * @psalm-return array|scalar
      */
     public function processParameterValue($value)
     {
@@ -509,10 +506,8 @@ abstract class AbstractQuery
 
     /**
      * Allows to translate entity namespaces to full qualified names.
-     *
-     * @return void
      */
-    private function translateNamespaces(Query\ResultSetMapping $rsm)
+    private function translateNamespaces(Query\ResultSetMapping $rsm): void
     {
         $translate = function ($alias): string {
             return $this->_em->getClassMetadata($alias)->getName();
@@ -593,6 +588,7 @@ abstract class AbstractQuery
      */
     public function setResultCacheDriver($resultCacheDriver = null)
     {
+        /** @phpstan-ignore-next-line */
         if ($resultCacheDriver !== null && ! ($resultCacheDriver instanceof \Doctrine\Common\Cache\Cache)) {
             throw ORMException::invalidResultCacheDriver();
         }
@@ -626,9 +622,9 @@ abstract class AbstractQuery
      *
      * @deprecated 2.7 Use {@see enableResultCache} and {@see disableResultCache} instead.
      *
-     * @param bool   $useCache
-     * @param int    $lifetime
-     * @param string $resultCacheId
+     * @param bool   $useCache      Whether or not to cache the results of this query.
+     * @param int    $lifetime      How long the cache entry is valid, in seconds.
+     * @param string $resultCacheId ID to use for the cache entry.
      *
      * @return static This query instance.
      */
@@ -671,7 +667,7 @@ abstract class AbstractQuery
     /**
      * Defines how long the result cache will be active before expire.
      *
-     * @param int|null $lifetime How long the cache entry is valid.
+     * @param int|null $lifetime How long the cache entry is valid, in seconds.
      *
      * @return static This query instance.
      */
@@ -723,7 +719,7 @@ abstract class AbstractQuery
     }
 
     /**
-     * @return QueryCacheProfile
+     * @return QueryCacheProfile|null
      */
     public function getQueryCacheProfile()
     {
@@ -860,7 +856,7 @@ abstract class AbstractQuery
      * @return mixed
      *
      * @throws NonUniqueResultException If the query result is not unique.
-     * @throws NoResultException        If the query returned no result and hydration mode is not HYDRATE_SINGLE_SCALAR.
+     * @throws NoResultException        If the query returned no result.
      */
     public function getSingleResult($hydrationMode = null)
     {
@@ -949,7 +945,7 @@ abstract class AbstractQuery
      * Executes the query and returns an IterableResult that can be used to incrementally
      * iterate over the result.
      *
-     * @deprecated
+     * @deprecated 2.8 Use {@see toIterable} instead. See https://github.com/doctrine/orm/issues/8463
      *
      * @param ArrayCollection|mixed[]|null $parameters    The query parameters.
      * @param string|int|null              $hydrationMode The hydration mode to use.
@@ -958,9 +954,11 @@ abstract class AbstractQuery
      */
     public function iterate($parameters = null, $hydrationMode = null)
     {
-        @trigger_error(
-            'Method ' . __METHOD__ . '() is deprecated and will be removed in Doctrine ORM 3.0. Use toIterable() instead.',
-            E_USER_DEPRECATED
+        Deprecation::trigger(
+            'doctrine/orm',
+            'https://github.com/doctrine/orm/issues/8463',
+            'Method %s() is deprecated and will be removed in Doctrine ORM 3.0. Use toIterable() instead.',
+            __METHOD__
         );
 
         if ($hydrationMode !== null) {
@@ -981,8 +979,9 @@ abstract class AbstractQuery
      * Executes the query and returns an iterable that can be used to incrementally
      * iterate over the result.
      *
-     * @param ArrayCollection|mixed[] $parameters    The query parameters.
-     * @param string|int|null         $hydrationMode The hydration mode to use.
+     * @param ArrayCollection|array|mixed[] $parameters    The query parameters.
+     * @param string|int|null               $hydrationMode The hydration mode to use.
+     * @psalm-param ArrayCollection<int, Parameter>|mixed[] $parameters
      *
      * @return iterable<mixed>
      */
@@ -1015,6 +1014,7 @@ abstract class AbstractQuery
      *
      * @param ArrayCollection|mixed[]|null $parameters    Query parameters.
      * @param string|int|null              $hydrationMode Processing mode to be used during the hydration process.
+     * @psalm-param ArrayCollection<int, Parameter>|mixed[]|null $parameters
      *
      * @return mixed
      */
@@ -1032,6 +1032,7 @@ abstract class AbstractQuery
      *
      * @param ArrayCollection|mixed[]|null $parameters
      * @param string|int|null              $hydrationMode
+     * @psalm-param ArrayCollection<int, Parameter>|mixed[]|null $parameters
      *
      * @return mixed
      */
@@ -1045,7 +1046,7 @@ abstract class AbstractQuery
             $this->setParameters($parameters);
         }
 
-        $setCacheEntry = static function (): void {
+        $setCacheEntry = static function ($data): void {
         };
 
         if ($this->_hydrationCacheProfile !== null) {
@@ -1091,6 +1092,7 @@ abstract class AbstractQuery
      *
      * @param ArrayCollection|mixed[]|null $parameters
      * @param string|int|null              $hydrationMode
+     * @psalm-param ArrayCollection<int, Parameter>|mixed[]|null $parameters
      *
      * @return mixed
      */
@@ -1129,10 +1131,7 @@ abstract class AbstractQuery
         return $result;
     }
 
-    /**
-     * @return TimestampCacheKey|null
-     */
-    private function getTimestampKey()
+    private function getTimestampKey(): ?TimestampCacheKey
     {
         $entityName = reset($this->_resultSetMapping->aliasMap);
 
@@ -1203,7 +1202,9 @@ abstract class AbstractQuery
     /**
      * Executes the query and returns a the resulting Statement object.
      *
-     * @return Statement The executed database statement that holds the results.
+     * @return ResultStatement|int The executed database statement that holds
+     *                             the results, or an integer indicating how
+     *                             many rows were affected.
      */
     abstract protected function _doExecute();
 

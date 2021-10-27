@@ -144,12 +144,13 @@ final class MakerTestDetails
             )
         ;
 
-        // use MySQL 5.6, which is what's currently available on Travis
+        // Flex includes a recipe to suffix the dbname w/ "_test" - lets keep
+        // things simple for these tests and not do that.
         $this->addReplacement(
-            'config/packages/doctrine.yaml',
-            "#server_version: '13'",
-            "server_version: '5.7'"
-        );
+            'config/packages/test/doctrine.yaml',
+            "dbname_suffix: '_test%env(default::TEST_TOKEN)%'",
+            '')
+        ;
 
         // this looks silly, but it's the only way to drop the database *for sure*,
         // as doctrine:database:drop will error if there is no database
@@ -350,5 +351,14 @@ final class MakerTestDetails
     public function getSkipMessage(): ?string
     {
         return $this->skipMessage;
+    }
+
+    public function useDoctrineAttributeMapping(): self
+    {
+        return $this->addReplacement(
+        'config/packages/doctrine.yaml',
+                'type: annotation',
+                'type: attribute'
+        );
     }
 }
