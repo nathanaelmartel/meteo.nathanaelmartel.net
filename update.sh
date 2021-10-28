@@ -5,8 +5,10 @@ git reset --hard origin/master
 
 ./clearcache.sh
 
-php bin/console  doctrine:schema:update --dump-sql
 
-echo ""
-echo "php bin/console  doctrine:schema:update --force"
-echo ""
+#php bin/console  doctrine:schema:update --dump-sql
+#php bin/console  doctrine:schema:update --force
+
+bin/console --no-interaction doctrine:migrations:migrate
+
+
